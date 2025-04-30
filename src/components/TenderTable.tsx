@@ -21,7 +21,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   // Keep local state of bids to prevent flashing when data is loading
   const [displayBids, setDisplayBids] = useState<GemBid[]>(bids);
   
-  // Update display bids when actual bids change, but only if not loading
+  // Only update display bids when actual bids change and loading is complete
   useEffect(() => {
     if (!loading && bids.length > 0) {
       setDisplayBids(bids);
@@ -29,7 +29,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   }, [bids, loading]);
   
   // Create a reusable table header to avoid duplicating code
-  const TableHeaders = () => (
+  const TableHeaders = React.memo(() => (
     <TableHeader>
       <TableRow>
         <TableHead className="w-[150px] font-medium">Bid Number</TableHead>
@@ -42,7 +42,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
         <TableHead className="font-medium">Download</TableHead>
       </TableRow>
     </TableHeader>
-  );
+  ));
   
   // If no data has been loaded yet and we're in a loading state, show skeleton
   if (loading && displayBids.length === 0) {
@@ -69,7 +69,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
     );
   }
 
-  // If we have data but are loading more, show existing data but with a loading indicator
+  // If we have data but are loading more, show existing data with a loading indicator
   if (loading && displayBids.length > 0) {
     return (
       <div className="rounded-md border overflow-hidden relative">
@@ -172,4 +172,5 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   );
 };
 
-export default TenderTable;
+// Use React.memo to prevent unnecessary re-renders
+export default React.memo(TenderTable);

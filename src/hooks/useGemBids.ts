@@ -25,14 +25,19 @@ interface Filters {
   search?: string;
 }
 
-// Cache for storing fetched data to prevent redundant API calls
+// Global cache for storing fetched data to prevent redundant API calls
 const dataCache = new Map<string, { data: GemBid[], count: number, timestamp: number }>();
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes cache expiry
+const filterOptionsCache = new Map<string, { options: string[], timestamp: number }>();
+const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes cache expiry
+const OPTIONS_CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes for filter options
 
 // Cache key generator
 const generateCacheKey = (page: number, filters: Filters) => {
   return `page_${page}_${JSON.stringify(filters)}`;
 };
+
+// In-progress requests tracker to avoid duplicate calls
+const pendingRequests = new Set<string>();
 
 export const useGemBids = (
   page: number,
@@ -44,16 +49,32 @@ export const useGemBids = (
   const [error, setError] = useState<string | null>(null);
   const activeRequest = useRef<AbortController | null>(null);
   const isMounted = useRef(true);
+  const fetchTimerRef = useRef<number | null>(null);
   
   const pageSize = 10;
   const start = (page - 1) * pageSize;
   
-  // Memoized fetch function to prevent unnecessary renders
+  // Clear any pending fetch timer when component unmounts
+  useEffect(() => {
+    return () => {
+      if (fetchTimerRef.current) {
+        clearTimeout(fetchTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Memoized fetch function with proper debounce and abort handling
   const fetchBids = useCallback(async () => {
+    // Generate the cache key for this specific query
+    const cacheKey = generateCacheKey(page, filters);
+    
+    // If this exact request is already in progress, don't start another one
+    if (pendingRequests.has(cacheKey)) {
+      console.log("Request already in progress, skipping duplicate:", cacheKey);
+      return;
+    }
+    
     try {
-      // Generate cache key based on current page and filters
-      const cacheKey = generateCacheKey(page, filters);
-      
       // Check if we have valid cached data
       const cachedData = dataCache.get(cacheKey);
       if (cachedData && Date.now() - cachedData.timestamp < CACHE_EXPIRY) {
@@ -65,6 +86,9 @@ export const useGemBids = (
         }
         return;
       }
+      
+      // Mark this request as in progress
+      pendingRequests.add(cacheKey);
       
       // If cache miss or expired, proceed with fetch
       console.log("Fetching bids with filters:", filters);
@@ -99,11 +123,16 @@ export const useGemBids = (
         .range(start, start + pageSize - 1)
         .order("start_date", { ascending: false });
 
+      // Remove from pending requests since it's complete
+      pendingRequests.delete(cacheKey);
+
       if (error) throw error;
       
       if (isMounted.current) {
         // Cache the results
         if (data && count !== null) {
+          console.log("Fetched data:", data);
+          console.log("Count:", count);
           dataCache.set(cacheKey, {
             data,
             count,
@@ -111,12 +140,15 @@ export const useGemBids = (
           });
         }
         
-        // Set loading to false first, then update the data to prevent flickering
+        // Update state only if still mounted
         setLoading(false);
         setBids(data || []);
         setTotalCount(count || 0);
       }
     } catch (err: any) {
+      // Remove from pending requests on error
+      pendingRequests.delete(cacheKey);
+      
       // Don't update state if the request was aborted
       if (err.name === 'AbortError') {
         console.log('Request was aborted');
@@ -134,21 +166,6 @@ export const useGemBids = (
   useEffect(() => {
     isMounted.current = true;
     
-    // Don't set loading to true immediately if we already have data
-    // This prevents the "blinking" effect when changing filters or page
-    const hasExistingData = bids.length > 0;
-    
-    // Check if we have cached data for this request
-    const cacheKey = generateCacheKey(page, filters);
-    const cachedData = dataCache.get(cacheKey);
-    
-    if (!cachedData) {
-      // Only show loading if we don't have data in the cache
-      if (!hasExistingData) {
-        setLoading(true);
-      }
-    }
-    
     // Cancel any in-flight requests to prevent race conditions
     if (activeRequest.current) {
       activeRequest.current.abort();
@@ -157,30 +174,50 @@ export const useGemBids = (
     // Create a new abort controller for this request
     activeRequest.current = new AbortController();
     
-    // Debounce the fetch operation to avoid rapid refetching
-    const timeoutId = setTimeout(() => {
+    // Generate cache key for this request
+    const cacheKey = generateCacheKey(page, filters);
+    const cachedData = dataCache.get(cacheKey);
+    
+    // Only show loading for completely new data, not cached data
+    if (!cachedData) {
+      setLoading(true);
+    }
+    
+    // Use a timeout to debounce rapid filter/page changes
+    if (fetchTimerRef.current) {
+      clearTimeout(fetchTimerRef.current);
+    }
+    
+    // Use window.setTimeout to get a numeric ID instead of NodeJS.Timeout
+    fetchTimerRef.current = window.setTimeout(() => {
       fetchBids();
-    }, 150); // Slightly increased debounce time
+    }, 200); // 200ms debounce time
     
     return () => {
-      clearTimeout(timeoutId);
       isMounted.current = false;
       if (activeRequest.current) {
         activeRequest.current.abort();
       }
+      if (fetchTimerRef.current) {
+        clearTimeout(fetchTimerRef.current);
+      }
     };
   }, [fetchBids]);
 
-  // Pre-fetch the next page if we're near the end of the current page
+  // Only run prefetch for the next page when appropriate and not for every render
   useEffect(() => {
-    if (bids.length >= pageSize * 0.8) { // If we have 80% of the page loaded
+    // Only prefetch if we have data and it's a reasonable amount (80% of current page)
+    if (bids.length >= pageSize * 0.8 && !loading) {
       const nextPage = page + 1;
       const nextCacheKey = generateCacheKey(nextPage, filters);
       
-      // Only prefetch if not already cached
-      if (!dataCache.has(nextCacheKey)) {
+      // Only prefetch if not already cached and not already in progress
+      if (!dataCache.has(nextCacheKey) && !pendingRequests.has(nextCacheKey)) {
         const prefetchNextPage = async () => {
           try {
+            // Mark as in progress
+            pendingRequests.add(nextCacheKey);
+            
             console.log("Prefetching next page:", nextPage);
             const { data, count } = await supabase
               .from("tenders_gem")
@@ -188,6 +225,9 @@ export const useGemBids = (
               .range((nextPage - 1) * pageSize, nextPage * pageSize - 1)
               .order("start_date", { ascending: false });
               
+            // Remove from pending requests
+            pendingRequests.delete(nextCacheKey);
+            
             if (data && count !== null) {
               dataCache.set(nextCacheKey, {
                 data,
@@ -196,15 +236,16 @@ export const useGemBids = (
               });
             }
           } catch (err) {
+            pendingRequests.delete(nextCacheKey);
             console.log("Error prefetching next page:", err);
           }
         };
         
-        // Run prefetch in the background
-        prefetchNextPage();
+        // Use a small timeout to avoid interfering with the main page load
+        setTimeout(prefetchNextPage, 1000);
       }
     }
-  }, [bids, page, filters, pageSize]);
+  }, [bids, page, filters, pageSize, loading]);
 
   return {
     bids,
@@ -215,20 +256,26 @@ export const useGemBids = (
   };
 };
 
-// This is a utility hook to fetch unique values for filters
+// This is a utility hook to fetch unique values for filters with improved caching
 export const useFilterOptions = (field: "ministry" | "department") => {
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const optionsCache = useRef<Record<string, { values: string[], timestamp: number }>>({});
-  const FILTER_CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes for filter options
+  const requestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     
+    // If we have a previous request in progress, abort it
+    if (requestRef.current) {
+      requestRef.current.abort();
+    }
+    requestRef.current = new AbortController();
+    
     // If we have cached results that aren't expired, use them immediately
-    if (optionsCache.current[field] && 
-        Date.now() - optionsCache.current[field].timestamp < FILTER_CACHE_EXPIRY) {
-      setOptions(optionsCache.current[field].values);
+    const cachedOptions = filterOptionsCache.get(field);
+    if (cachedOptions && 
+        Date.now() - cachedOptions.timestamp < OPTIONS_CACHE_EXPIRY) {
+      setOptions(cachedOptions.options);
       setLoading(false);
       return;
     }
@@ -248,17 +295,20 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
         
         // Cache the results with timestamp
-        optionsCache.current[field] = {
-          values: uniqueValues,
+        filterOptionsCache.set(field, {
+          options: uniqueValues,
           timestamp: Date.now()
-        };
+        });
         
         if (isMounted) {
           setOptions(uniqueValues);
           setLoading(false);
         }
       } catch (err) {
-        console.error(`Error fetching ${field} options:`, err);
+        // Only log actual errors, not aborts
+        if (err.name !== 'AbortError') {
+          console.error(`Error fetching ${field} options:`, err);
+        }
         if (isMounted) {
           setLoading(false);
         }
@@ -269,6 +319,9 @@ export const useFilterOptions = (field: "ministry" | "department") => {
     
     return () => {
       isMounted = false;
+      if (requestRef.current) {
+        requestRef.current.abort();
+      }
     };
   }, [field]);
 

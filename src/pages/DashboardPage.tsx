@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import FilterBar from "@/components/FilterBar";
 import TenderTable from "@/components/TenderTable";
@@ -31,15 +31,17 @@ const DashboardPage = () => {
     search: "",
   });
 
-  // Process filters to handle 'all' value
-  const processedFilters = {
+  // Process filters to handle 'all' value - memoize to prevent unnecessary recalculations
+  const processedFilters = useMemo(() => ({
     ...filters,
     ministry: filters.ministry === "all" ? "" : filters.ministry,
     department: filters.department === "all" ? "" : filters.department,
-  };
+  }), [filters]);
 
-  // Initialize data fetching - memoize with useCallback for optimization
+  // Initialize data fetching - we now have optimized this in the hook
   const { bids, totalPages, loading, error } = useGemBids(currentPage, processedFilters);
+  
+  // Optimized filter options with caching
   const { options: ministries, loading: ministriesLoading } = useFilterOptions("ministry");
   const { options: departments, loading: departmentsLoading } = useFilterOptions("department");
 
