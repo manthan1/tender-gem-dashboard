@@ -1,9 +1,9 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface GemBid {
-  id: number; // Changed from string to number to match Supabase schema
+  id: number;
   bid_number: string;
   category: string;
   quantity: number;
@@ -33,13 +33,28 @@ export const useGemBids = (
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const activeRequest = useRef<AbortController | null>(null);
   
   const pageSize = 10;
   const start = (page - 1) * pageSize;
   
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
+    
+    // Don't set loading to true immediately if we already have data
+    // This prevents the "blinking" effect when changing filters or page
+    const hasExistingData = bids.length > 0;
+    if (!hasExistingData) {
+      setLoading(true);
+    }
+    
+    // Cancel any in-flight requests to prevent race conditions
+    if (activeRequest.current) {
+      activeRequest.current.abort();
+    }
+    
+    // Create a new abort controller for this request
+    activeRequest.current = new AbortController();
     
     const fetchBids = async () => {
       try {
@@ -82,23 +97,38 @@ export const useGemBids = (
         if (error) throw error;
         
         if (isMounted) {
+          // Set loading to false first, then update the data
+          // This sequence helps prevent flickering
+          setLoading(false);
           setBids(data || []);
           setTotalCount(count || 0);
-          setLoading(false);
         }
       } catch (err: any) {
+        // Don't update state if the request was aborted
+        if (err.name === 'AbortError') {
+          console.log('Request was aborted');
+          return;
+        }
+        
         console.error("Error fetching gem bids:", err);
         if (isMounted) {
-          setError(err.message);
           setLoading(false);
+          setError(err.message);
         }
       }
     };
 
-    fetchBids();
+    // Use a small timeout to debounce frequent changes
+    const timeoutId = setTimeout(() => {
+      fetchBids();
+    }, 100);
     
     return () => {
+      clearTimeout(timeoutId);
       isMounted = false;
+      if (activeRequest.current) {
+        activeRequest.current.abort();
+      }
     };
   }, [page, filters]);
 
@@ -115,12 +145,19 @@ export const useGemBids = (
 export const useFilterOptions = (field: "ministry" | "department") => {
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const optionsCache = useRef<Record<string, string[]>>({});
 
   useEffect(() => {
     let isMounted = true;
     
+    // If we have cached results, use them immediately
+    if (optionsCache.current[field]) {
+      setOptions(optionsCache.current[field]);
+      setLoading(false);
+      return;
+    }
+    
     const fetchOptions = async () => {
-      setLoading(true);
       try {
         console.log(`Fetching ${field} options`);
         // Get distinct values from the tenders_gem table
@@ -133,6 +170,9 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         
         // Extract unique values
         const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
+        
+        // Cache the results
+        optionsCache.current[field] = uniqueValues;
         
         if (isMounted) {
           setOptions(uniqueValues);

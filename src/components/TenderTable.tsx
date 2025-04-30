@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -18,8 +17,18 @@ interface TenderTableProps {
 }
 
 const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
-  // If loading, show skeleton loading UI
-  if (loading) {
+  // Keep local state of bids to prevent flashing when data is loading
+  const [displayBids, setDisplayBids] = useState<GemBid[]>(bids);
+  
+  // Update display bids when actual bids change, but only if not loading
+  useEffect(() => {
+    if (!loading && bids.length > 0) {
+      setDisplayBids(bids);
+    }
+  }, [bids, loading]);
+  
+  // If no data has been loaded yet and we're in a loading state, show skeleton
+  if (loading && displayBids.length === 0) {
     return (
       <div className="rounded-md border overflow-hidden">
         <Table>
@@ -54,7 +63,8 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
     );
   }
 
-  if (bids.length === 0) {
+  // If we have no data to display, show a message
+  if (displayBids.length === 0) {
     return (
       <div className="flex justify-center items-center h-64 border rounded-md">
         <p className="text-gray-500">No tenders found matching your criteria.</p>
@@ -62,6 +72,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
     );
   }
 
+  // Otherwise, show the data
   return (
     <div className="rounded-md border overflow-hidden">
       <Table>
@@ -78,7 +89,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {bids.map((bid) => (
+          {displayBids.map((bid) => (
             <TableRow key={bid.id}>
               <TableCell className="font-medium">{bid.bid_number}</TableCell>
               <TableCell>{bid.category}</TableCell>
