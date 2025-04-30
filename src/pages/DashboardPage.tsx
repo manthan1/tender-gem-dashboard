@@ -31,7 +31,14 @@ const DashboardPage = () => {
     search: "",
   });
 
-  const { bids, totalPages, loading, error } = useGemBids(currentPage, filters);
+  // Process filters to handle 'all' value
+  const processedFilters = {
+    ...filters,
+    ministry: filters.ministry === "all" ? "" : filters.ministry,
+    department: filters.department === "all" ? "" : filters.department,
+  };
+
+  const { bids, totalPages, loading, error } = useGemBids(currentPage, processedFilters);
   const { options: ministries, loading: ministriesLoading } = useFilterOptions("ministry");
   const { options: departments, loading: departmentsLoading } = useFilterOptions("department");
 

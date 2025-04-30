@@ -83,7 +83,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
               <SelectValue placeholder="All Ministries" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Ministries</SelectItem>
+              <SelectItem value="all">All Ministries</SelectItem>
               {ministries.map((item) => (
                 <SelectItem key={item} value={item}>
                   {item}
@@ -103,7 +103,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Departments</SelectItem>
+              <SelectItem value="all">All Departments</SelectItem>
               {departments.map((item) => (
                 <SelectItem key={item} value={item}>
                   {item}
