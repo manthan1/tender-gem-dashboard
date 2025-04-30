@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface GemBid {
-  id: string;
+  id: number; // Changed from string to number to match Supabase schema
   bid_number: string;
   category: string;
   quantity: number;
