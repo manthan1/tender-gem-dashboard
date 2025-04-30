@@ -38,9 +38,12 @@ export const useGemBids = (
   const start = (page - 1) * pageSize;
   
   useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    
     const fetchBids = async () => {
-      setLoading(true);
       try {
+        console.log("Fetching bids with filters:", filters);
         let query = supabase
           .from("tenders_gem")
           .select("*", { count: "exact" });
@@ -72,19 +75,31 @@ export const useGemBids = (
           .range(start, start + pageSize - 1)
           .order("start_date", { ascending: false });
 
+        console.log("Fetched data:", data);
+        console.log("Error:", error);
+        console.log("Count:", count);
+
         if (error) throw error;
         
-        setBids(data || []);
-        setTotalCount(count || 0);
+        if (isMounted) {
+          setBids(data || []);
+          setTotalCount(count || 0);
+          setLoading(false);
+        }
       } catch (err: any) {
-        setError(err.message);
         console.error("Error fetching gem bids:", err);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
+        }
       }
     };
 
     fetchBids();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [page, filters]);
 
   return {
@@ -102,9 +117,12 @@ export const useFilterOptions = (field: "ministry" | "department") => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchOptions = async () => {
       setLoading(true);
       try {
+        console.log(`Fetching ${field} options`);
         // Get distinct values from the tenders_gem table
         const { data, error } = await supabase
           .from("tenders_gem")
@@ -115,15 +133,24 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         
         // Extract unique values
         const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
-        setOptions(uniqueValues);
+        
+        if (isMounted) {
+          setOptions(uniqueValues);
+          setLoading(false);
+        }
       } catch (err) {
         console.error(`Error fetching ${field} options:`, err);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchOptions();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [field]);
 
   return { options, loading };

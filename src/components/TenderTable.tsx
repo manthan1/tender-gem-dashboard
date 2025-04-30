@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { GemBid } from "@/hooks/useGemBids";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TenderTableProps {
   bids: GemBid[];
@@ -17,17 +18,45 @@ interface TenderTableProps {
 }
 
 const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
+  // If loading, show skeleton loading UI
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-gray-500">Loading data...</p>
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[150px] font-medium">Bid Number</TableHead>
+              <TableHead className="font-medium">Category</TableHead>
+              <TableHead className="font-medium">Quantity</TableHead>
+              <TableHead className="font-medium">Ministry</TableHead>
+              <TableHead className="font-medium">Department</TableHead>
+              <TableHead className="font-medium">Start Date</TableHead>
+              <TableHead className="font-medium">End Date</TableHead>
+              <TableHead className="font-medium">Download</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array(5).fill(0).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     );
   }
 
   if (bids.length === 0) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-64 border rounded-md">
         <p className="text-gray-500">No tenders found matching your criteria.</p>
       </div>
     );
