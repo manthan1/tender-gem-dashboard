@@ -48,6 +48,51 @@ export type Database = {
         }
         Relationships: []
       }
+      tenders_gem: {
+        Row: {
+          bid_id: number | null
+          bid_number: string | null
+          bid_url: string | null
+          category: string | null
+          created_at: string | null
+          department: string | null
+          download_url: string | null
+          end_date: string | null
+          id: number
+          ministry: string | null
+          quantity: number | null
+          start_date: string | null
+        }
+        Insert: {
+          bid_id?: number | null
+          bid_number?: string | null
+          bid_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          department?: string | null
+          download_url?: string | null
+          end_date?: string | null
+          id?: number
+          ministry?: string | null
+          quantity?: number | null
+          start_date?: string | null
+        }
+        Update: {
+          bid_id?: number | null
+          bid_number?: string | null
+          bid_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          department?: string | null
+          download_url?: string | null
+          end_date?: string | null
+          id?: number
+          ministry?: string | null
+          quantity?: number | null
+          start_date?: string | null
+        }
+        Relationships: []
+      }
       tenders_mmp: {
         Row: {
           created_at: string | null

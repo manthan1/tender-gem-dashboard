@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "../utils/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface GemBid {
   id: string;
@@ -11,7 +11,8 @@ export interface GemBid {
   department: string;
   start_date: string;
   end_date: string;
-  download_link?: string;
+  download_url?: string;
+  bid_url?: string;
 }
 
 interface Filters {
@@ -41,7 +42,7 @@ export const useGemBids = (
       setLoading(true);
       try {
         let query = supabase
-          .from("gem_bids")
+          .from("tenders_gem")
           .select("*", { count: "exact" });
 
         // Apply filters if they exist
@@ -104,17 +105,16 @@ export const useFilterOptions = (field: "ministry" | "department") => {
     const fetchOptions = async () => {
       setLoading(true);
       try {
-        // In a real application, we would use a dedicated API endpoint for this
-        // For this MVP, we'll use a workaround to get distinct values
+        // Get distinct values from the tenders_gem table
         const { data, error } = await supabase
-          .from("gem_bids")
+          .from("tenders_gem")
           .select(field)
           .order(field);
 
         if (error) throw error;
         
         // Extract unique values
-        const uniqueValues = [...new Set(data.map(item => item[field]))];
+        const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
         setOptions(uniqueValues);
       } catch (err) {
         console.error(`Error fetching ${field} options:`, err);

@@ -67,9 +67,9 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                   : "N/A"}
               </TableCell>
               <TableCell>
-                {bid.download_link ? (
+                {bid.download_url ? (
                   <a
-                    href={bid.download_link}
+                    href={bid.download_url}
                     className="text-blue-600 hover:text-blue-800 hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
