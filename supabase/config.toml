@@ -1,1 +1,5 @@
+
 project_id = "zmwtsbrynlzqnfiqigip"
+
+[functions.fetch-gem-bids]
+verify_jwt = true
