@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,7 +50,7 @@ export const useGemBids = (
   const debounceTimerRef = useRef<number | null>(null);
   const initialLoadComplete = useRef(false);
   
-  const pageSize = 10;
+  const pageSize = 20; // Changed from 10 to 20
   const start = (page - 1) * pageSize;
 
   // Clear debounce timer when component unmounts

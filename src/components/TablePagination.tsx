@@ -8,6 +8,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious, 
+  PaginationEllipsis
 } from "@/components/ui/pagination";
 
 interface TablePaginationProps {
@@ -24,7 +25,7 @@ const TablePagination: React.FC<TablePaginationProps> = ({
   // Create an array of page numbers to display
   const getPageNumbers = () => {
     const pages = [];
-    const maxPagesToShow = 5;
+    const maxPagesToShow = 7; // Increased from 5 to 7 to handle more pages
     
     // Handle case with few pages
     if (totalPages <= maxPagesToShow) {
@@ -38,16 +39,16 @@ const TablePagination: React.FC<TablePaginationProps> = ({
     pages.push(1);
     
     // Calculate start and end of the middle block
-    let startPage = Math.max(2, currentPage - 1);
-    let endPage = Math.min(totalPages - 1, currentPage + 1);
+    let startPage = Math.max(2, currentPage - 2);
+    let endPage = Math.min(totalPages - 1, currentPage + 2);
     
     // Adjust if we're at the start
-    if (currentPage <= 3) {
+    if (currentPage <= 4) {
       endPage = Math.min(totalPages - 1, maxPagesToShow - 1);
     }
     
     // Adjust if we're at the end
-    if (currentPage >= totalPages - 2) {
+    if (currentPage >= totalPages - 3) {
       startPage = Math.max(2, totalPages - (maxPagesToShow - 2));
     }
     
@@ -87,7 +88,7 @@ const TablePagination: React.FC<TablePaginationProps> = ({
         {getPageNumbers().map((page, index) => (
           <PaginationItem key={index}>
             {page === "..." ? (
-              <span className="px-4 py-2">...</span>
+              <PaginationEllipsis />
             ) : (
               <PaginationLink
                 isActive={page === currentPage}
