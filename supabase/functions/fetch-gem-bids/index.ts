@@ -52,11 +52,15 @@ serve(async (req) => {
     const newBids = await fetchNewGemBids(existingIds);
     console.log(`Found ${newBids.length} new bids to insert`);
     
-    // Insert new bids into the database
+    // Insert new bids into the database with conflict handling
     if (newBids.length > 0) {
+      // Use upsert with onConflict parameter to handle duplicates
       const { error: insertError } = await supabase
         .from("tenders_gem")
-        .insert(newBids);
+        .upsert(newBids, { 
+          onConflict: 'bid_id', 
+          ignoreDuplicates: true 
+        });
       
       if (insertError) {
         throw new Error(`Error inserting new bids: ${insertError.message}`);
