@@ -129,9 +129,10 @@ export const useGemBids = (
         .order("start_date", { ascending: false });
         
       // Store the promise of the executed query in ongoing requests
-      const requestPromise = query.then((result) => {
+      // Convert PromiseLike to full Promise using Promise.resolve
+      const requestPromise = Promise.resolve(query.then((result) => {
         return result;
-      });
+      }));
       
       ongoingRequests.set(cacheKey, requestPromise);
       
@@ -253,7 +254,8 @@ export const useGemBids = (
               .order("start_date", { ascending: false });
               
             // Create and store the promise in ongoing requests
-            const prefetchPromise = query.then(result => result);
+            // Convert PromiseLike to full Promise using Promise.resolve
+            const prefetchPromise = Promise.resolve(query.then(result => result));
             ongoingRequests.set(nextCacheKey, prefetchPromise);
             
             // Execute in background
@@ -318,11 +320,14 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         console.log(`Fetching ${field} options`);
         
         // Create and execute the query in one step
-        const promise = supabase
-          .from("tenders_gem")
-          .select(field)
-          .order(field)
-          .then(result => result);
+        // Convert PromiseLike to full Promise using Promise.resolve
+        const promise = Promise.resolve(
+          supabase
+            .from("tenders_gem")
+            .select(field)
+            .order(field)
+            .then(result => result)
+        );
           
         requestRef.current = promise;
         
