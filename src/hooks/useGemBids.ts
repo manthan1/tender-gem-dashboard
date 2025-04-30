@@ -123,12 +123,16 @@ export const useGemBids = (
         );
       }
       
-      // Create the actual request promise
-      const requestPromise = query
+      // Add range and ordering
+      query = query
         .range(start, start + pageSize - 1)
         .order("start_date", { ascending: false });
+        
+      // Store the promise of the executed query in ongoing requests
+      const requestPromise = query.then((result) => {
+        return result;
+      });
       
-      // Store the promise in the ongoing requests map
       ongoingRequests.set(cacheKey, requestPromise);
       
       const { data, error, count } = await requestPromise;
@@ -215,7 +219,7 @@ export const useGemBids = (
           if (!dataCache.has(nextCacheKey) && !ongoingRequests.has(nextCacheKey)) {
             console.log("Prefetching next page:", nextPage);
             
-            // Just create the query but don't await it - let it happen in background
+            // Create the query but wrap it with a promise for execution
             let query = supabase
               .from("tenders_gem")
               .select("*", { count: "exact" });
@@ -243,11 +247,13 @@ export const useGemBids = (
               );
             }
             
-            const prefetchPromise = query
+            // Add range and ordering for the next page
+            query = query
               .range((nextPage - 1) * pageSize, nextPage * pageSize - 1)
               .order("start_date", { ascending: false });
               
-            // Mark as in progress
+            // Create and store the promise in ongoing requests
+            const prefetchPromise = query.then(result => result);
             ongoingRequests.set(nextCacheKey, prefetchPromise);
             
             // Execute in background
@@ -311,11 +317,12 @@ export const useFilterOptions = (field: "ministry" | "department") => {
       try {
         console.log(`Fetching ${field} options`);
         
-        // Create the actual request promise
+        // Create and execute the query in one step
         const promise = supabase
           .from("tenders_gem")
           .select(field)
-          .order(field);
+          .order(field)
+          .then(result => result);
           
         requestRef.current = promise;
         
