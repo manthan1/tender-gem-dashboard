@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,8 +27,39 @@ const FilterBar: React.FC<FilterBarProps> = ({
   const [department, setDepartment] = React.useState(currentFilters.department || "");
   const [dateFrom, setDateFrom] = React.useState<Date | null>(currentFilters.dateRange?.from || null);
   const [dateTo, setDateTo] = React.useState<Date | null>(currentFilters.dateRange?.to || null);
+  const searchDebounceRef = useRef<number | null>(null);
+
+  // Handle search input with debounce
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    
+    // Only trigger search when user stops typing (300ms debounce)
+    if (search !== currentFilters.search) {
+      searchDebounceRef.current = window.setTimeout(() => {
+        onFilterChange({
+          ...currentFilters,
+          search,
+        });
+        searchDebounceRef.current = null;
+      }, 300);
+    }
+    
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [search, currentFilters, onFilterChange]);
 
   const handleApplyFilters = () => {
+    // Clear any pending search debounce
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+    
     onFilterChange({
       search,
       ministry,
@@ -46,6 +77,12 @@ const FilterBar: React.FC<FilterBarProps> = ({
     setDepartment("");
     setDateFrom(null);
     setDateTo(null);
+    
+    // Clear any pending search debounce
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
     
     onFilterChange({
       search: "",
@@ -183,4 +220,4 @@ const FilterBar: React.FC<FilterBarProps> = ({
   );
 };
 
-export default FilterBar;
+export default React.memo(FilterBar);

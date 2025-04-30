@@ -36,8 +36,8 @@ const generateCacheKey = (page: number, filters: Filters) => {
   return `page_${page}_${JSON.stringify(filters)}`;
 };
 
-// In-progress requests tracker to avoid duplicate calls
-const pendingRequests = new Set<string>();
+// Track ongoing requests to prevent duplicates
+const ongoingRequests = new Map<string, Promise<any>>();
 
 export const useGemBids = (
   page: number,
@@ -47,35 +47,29 @@ export const useGemBids = (
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const activeRequest = useRef<AbortController | null>(null);
   const isMounted = useRef(true);
-  const fetchTimerRef = useRef<number | null>(null);
+  const debounceTimerRef = useRef<number | null>(null);
+  const initialLoadComplete = useRef(false);
   
   const pageSize = 10;
   const start = (page - 1) * pageSize;
-  
-  // Clear any pending fetch timer when component unmounts
+
+  // Clear debounce timer when component unmounts
   useEffect(() => {
     return () => {
-      if (fetchTimerRef.current) {
-        clearTimeout(fetchTimerRef.current);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
   }, []);
 
-  // Memoized fetch function with proper debounce and abort handling
-  const fetchBids = useCallback(async () => {
-    // Generate the cache key for this specific query
+  // Stable fetchBids function with deduplication
+  const fetchBids = useCallback(async (skipLoading = false) => {
+    // Generate cache key for this specific query
     const cacheKey = generateCacheKey(page, filters);
     
-    // If this exact request is already in progress, don't start another one
-    if (pendingRequests.has(cacheKey)) {
-      console.log("Request already in progress, skipping duplicate:", cacheKey);
-      return;
-    }
-    
     try {
-      // Check if we have valid cached data
+      // First check cache
       const cachedData = dataCache.get(cacheKey);
       if (cachedData && Date.now() - cachedData.timestamp < CACHE_EXPIRY) {
         console.log("Using cached data for:", cacheKey);
@@ -83,20 +77,30 @@ export const useGemBids = (
           setBids(cachedData.data);
           setTotalCount(cachedData.count);
           setLoading(false);
+          initialLoadComplete.current = true;
         }
         return;
       }
       
-      // Mark this request as in progress
-      pendingRequests.add(cacheKey);
+      // If there's already an ongoing request for this exact data, use it
+      if (ongoingRequests.has(cacheKey)) {
+        console.log("Using existing request for:", cacheKey);
+        try {
+          await ongoingRequests.get(cacheKey);
+          // This will set loading to false after the request completes
+          return;
+        } catch (err) {
+          // If the shared request failed, continue to make a new one
+          console.log("Shared request failed, making new one");
+        }
+      }
       
-      // If cache miss or expired, proceed with fetch
-      console.log("Fetching bids with filters:", filters);
+      // Create the query
       let query = supabase
         .from("tenders_gem")
         .select("*", { count: "exact" });
 
-      // Apply filters if they exist
+      // Apply filters
       if (filters.ministry) {
         query = query.eq("ministry", filters.ministry);
       }
@@ -119,20 +123,24 @@ export const useGemBids = (
         );
       }
       
-      const { data, error, count } = await query
+      // Create the actual request promise
+      const requestPromise = query
         .range(start, start + pageSize - 1)
         .order("start_date", { ascending: false });
-
-      // Remove from pending requests since it's complete
-      pendingRequests.delete(cacheKey);
+      
+      // Store the promise in the ongoing requests map
+      ongoingRequests.set(cacheKey, requestPromise);
+      
+      const { data, error, count } = await requestPromise;
+      
+      // Remove from ongoing requests
+      ongoingRequests.delete(cacheKey);
 
       if (error) throw error;
       
       if (isMounted.current) {
         // Cache the results
         if (data && count !== null) {
-          console.log("Fetched data:", data);
-          console.log("Count:", count);
           dataCache.set(cacheKey, {
             data,
             count,
@@ -144,16 +152,11 @@ export const useGemBids = (
         setLoading(false);
         setBids(data || []);
         setTotalCount(count || 0);
+        initialLoadComplete.current = true;
       }
     } catch (err: any) {
-      // Remove from pending requests on error
-      pendingRequests.delete(cacheKey);
-      
-      // Don't update state if the request was aborted
-      if (err.name === 'AbortError') {
-        console.log('Request was aborted');
-        return;
-      }
+      // Clean up ongoing request on error
+      ongoingRequests.delete(cacheKey);
       
       console.error("Error fetching gem bids:", err);
       if (isMounted.current) {
@@ -161,20 +164,13 @@ export const useGemBids = (
         setError(err.message);
       }
     }
-  }, [page, filters]);
+  }, [page, filters, pageSize, start]);
 
+  // Primary effect for data fetching with proper dependencies
   useEffect(() => {
     isMounted.current = true;
     
-    // Cancel any in-flight requests to prevent race conditions
-    if (activeRequest.current) {
-      activeRequest.current.abort();
-    }
-    
-    // Create a new abort controller for this request
-    activeRequest.current = new AbortController();
-    
-    // Generate cache key for this request
+    // Skip loading state for very quick cache hits
     const cacheKey = generateCacheKey(page, filters);
     const cachedData = dataCache.get(cacheKey);
     
@@ -183,69 +179,97 @@ export const useGemBids = (
       setLoading(true);
     }
     
-    // Use a timeout to debounce rapid filter/page changes
-    if (fetchTimerRef.current) {
-      clearTimeout(fetchTimerRef.current);
+    // Debounce data fetching
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
     
-    // Use window.setTimeout to get a numeric ID instead of NodeJS.Timeout
-    fetchTimerRef.current = window.setTimeout(() => {
+    // Different debounce times for different triggers
+    const debounceTime = filters.search ? 300 : 100; // 300ms for search, 100ms for other changes
+    
+    debounceTimerRef.current = window.setTimeout(() => {
       fetchBids();
-    }, 200); // 200ms debounce time
+      debounceTimerRef.current = null;
+    }, debounceTime);
     
     return () => {
       isMounted.current = false;
-      if (activeRequest.current) {
-        activeRequest.current.abort();
-      }
-      if (fetchTimerRef.current) {
-        clearTimeout(fetchTimerRef.current);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
   }, [fetchBids]);
 
-  // Only run prefetch for the next page when appropriate and not for every render
+  // Separate effect for prefetching next page - only run when appropriate
   useEffect(() => {
-    // Only prefetch if we have data and it's a reasonable amount (80% of current page)
-    if (bids.length >= pageSize * 0.8 && !loading) {
+    // Only prefetch next page when current page data is loaded and stable
+    if (bids.length > 0 && !loading && initialLoadComplete.current) {
       const nextPage = page + 1;
       const nextCacheKey = generateCacheKey(nextPage, filters);
       
       // Only prefetch if not already cached and not already in progress
-      if (!dataCache.has(nextCacheKey) && !pendingRequests.has(nextCacheKey)) {
-        const prefetchNextPage = async () => {
-          try {
-            // Mark as in progress
-            pendingRequests.add(nextCacheKey);
-            
+      if (!dataCache.has(nextCacheKey) && !ongoingRequests.has(nextCacheKey)) {
+        // Wait a bit before prefetching to ensure it doesn't interfere with current rendering
+        const prefetchTimer = setTimeout(() => {
+          // Check cache again in case it was populated during the timeout
+          if (!dataCache.has(nextCacheKey) && !ongoingRequests.has(nextCacheKey)) {
             console.log("Prefetching next page:", nextPage);
-            const { data, count } = await supabase
+            
+            // Just create the query but don't await it - let it happen in background
+            let query = supabase
               .from("tenders_gem")
-              .select("*", { count: "exact" })
+              .select("*", { count: "exact" });
+              
+            // Apply same filters
+            if (filters.ministry) {
+              query = query.eq("ministry", filters.ministry);
+            }
+            
+            if (filters.department) {
+              query = query.eq("department", filters.department);
+            }
+            
+            if (filters.dateRange?.from) {
+              query = query.gte("start_date", filters.dateRange.from.toISOString());
+            }
+            
+            if (filters.dateRange?.to) {
+              query = query.lte("start_date", filters.dateRange.to.toISOString());
+            }
+            
+            if (filters.search) {
+              query = query.or(
+                `bid_number.ilike.%${filters.search}%,category.ilike.%${filters.search}%`
+              );
+            }
+            
+            const prefetchPromise = query
               .range((nextPage - 1) * pageSize, nextPage * pageSize - 1)
               .order("start_date", { ascending: false });
               
-            // Remove from pending requests
-            pendingRequests.delete(nextCacheKey);
+            // Mark as in progress
+            ongoingRequests.set(nextCacheKey, prefetchPromise);
             
-            if (data && count !== null) {
-              dataCache.set(nextCacheKey, {
-                data,
-                count,
-                timestamp: Date.now()
-              });
-            }
-          } catch (err) {
-            pendingRequests.delete(nextCacheKey);
-            console.log("Error prefetching next page:", err);
+            // Execute in background
+            prefetchPromise.then(({data, count}) => {
+              ongoingRequests.delete(nextCacheKey);
+              if (data && count !== null) {
+                dataCache.set(nextCacheKey, {
+                  data,
+                  count,
+                  timestamp: Date.now()
+                });
+              }
+            }).catch(() => {
+              ongoingRequests.delete(nextCacheKey);
+            });
           }
-        };
+        }, 1500); // Longer delay for prefetching
         
-        // Use a small timeout to avoid interfering with the main page load
-        setTimeout(prefetchNextPage, 1000);
+        return () => clearTimeout(prefetchTimer);
       }
     }
-  }, [bids, page, filters, pageSize, loading]);
+  }, [bids, loading, page, filters, pageSize]);
 
   return {
     bids,
@@ -256,38 +280,47 @@ export const useGemBids = (
   };
 };
 
-// This is a utility hook to fetch unique values for filters with improved caching
+// Optimized hook to fetch filter options
 export const useFilterOptions = (field: "ministry" | "department") => {
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const requestRef = useRef<AbortController | null>(null);
+  const requestRef = useRef<Promise<any> | null>(null);
+  const initialLoadComplete = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
     
-    // If we have a previous request in progress, abort it
-    if (requestRef.current) {
-      requestRef.current.abort();
-    }
-    requestRef.current = new AbortController();
-    
-    // If we have cached results that aren't expired, use them immediately
+    // Check cache first
     const cachedOptions = filterOptionsCache.get(field);
     if (cachedOptions && 
         Date.now() - cachedOptions.timestamp < OPTIONS_CACHE_EXPIRY) {
       setOptions(cachedOptions.options);
       setLoading(false);
+      initialLoadComplete.current = true;
+      return;
+    }
+    
+    // If first load already happened, avoid duplicate requests
+    if (requestRef.current && initialLoadComplete.current) {
       return;
     }
     
     const fetchOptions = async () => {
+      if (requestRef.current) return;
+      
       try {
         console.log(`Fetching ${field} options`);
-        // Get distinct values from the tenders_gem table
-        const { data, error } = await supabase
+        
+        // Create the actual request promise
+        const promise = supabase
           .from("tenders_gem")
           .select(field)
           .order(field);
+          
+        requestRef.current = promise;
+        
+        const { data, error } = await promise;
+        requestRef.current = null;
 
         if (error) throw error;
         
@@ -303,12 +336,11 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         if (isMounted) {
           setOptions(uniqueValues);
           setLoading(false);
+          initialLoadComplete.current = true;
         }
       } catch (err) {
-        // Only log actual errors, not aborts
-        if (err.name !== 'AbortError') {
-          console.error(`Error fetching ${field} options:`, err);
-        }
+        requestRef.current = null;
+        console.error(`Error fetching ${field} options:`, err);
         if (isMounted) {
           setLoading(false);
         }
@@ -319,9 +351,6 @@ export const useFilterOptions = (field: "ministry" | "department") => {
     
     return () => {
       isMounted = false;
-      if (requestRef.current) {
-        requestRef.current.abort();
-      }
     };
   }, [field]);
 

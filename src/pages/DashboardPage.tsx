@@ -38,12 +38,12 @@ const DashboardPage = () => {
     department: filters.department === "all" ? "" : filters.department,
   }), [filters]);
 
-  // Initialize data fetching - we now have optimized this in the hook
+  // Initialize data fetching with the optimized hook
   const { bids, totalPages, loading, error } = useGemBids(currentPage, processedFilters);
   
-  // Optimized filter options with caching
-  const { options: ministries, loading: ministriesLoading } = useFilterOptions("ministry");
-  const { options: departments, loading: departmentsLoading } = useFilterOptions("department");
+  // Get filter options with cached data
+  const { options: ministries } = useFilterOptions("ministry");
+  const { options: departments } = useFilterOptions("department");
 
   // Handle filter changes - memoized for performance
   const handleFilterChange = useCallback((newFilters: Filters) => {
@@ -98,4 +98,5 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+// Prevent unnecessary re-renders
+export default React.memo(DashboardPage);
