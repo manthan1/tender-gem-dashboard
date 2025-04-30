@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import FilterBar from "@/components/FilterBar";
 import TenderTable from "@/components/TenderTable";
@@ -38,20 +38,21 @@ const DashboardPage = () => {
     department: filters.department === "all" ? "" : filters.department,
   };
 
+  // Initialize data fetching - memoize with useCallback for optimization
   const { bids, totalPages, loading, error } = useGemBids(currentPage, processedFilters);
   const { options: ministries, loading: ministriesLoading } = useFilterOptions("ministry");
   const { options: departments, loading: departmentsLoading } = useFilterOptions("department");
 
-  // Handle filter changes
-  const handleFilterChange = (newFilters: Filters) => {
+  // Handle filter changes - memoized for performance
+  const handleFilterChange = useCallback((newFilters: Filters) => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when filters change
-  };
+  }, []);
 
-  // Handle page changes
-  const handlePageChange = (page: number) => {
+  // Handle page changes - memoized for performance
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
   // Show error toast if API call fails
   React.useEffect(() => {
@@ -77,7 +78,7 @@ const DashboardPage = () => {
           />
 
           <Card>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-hidden">
               <TenderTable bids={bids} loading={loading} />
             </CardContent>
           </Card>
