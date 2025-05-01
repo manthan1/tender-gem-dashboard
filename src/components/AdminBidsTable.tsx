@@ -14,7 +14,7 @@ interface AdminBid {
   tender_id: number;
   user_id: string;
   user_email?: string;
-  tender?: {
+  tenders_gem?: {
     bid_number: string;
     ministry: string;
     department: string;
