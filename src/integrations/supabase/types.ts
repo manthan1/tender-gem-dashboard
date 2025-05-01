@@ -233,6 +233,36 @@ export type Database = {
           },
         ]
       }
+      user_documents: {
+        Row: {
+          document_type: string
+          file_name: string
+          file_path: string
+          id: string
+          uploaded_at: string | null
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          document_type: string
+          file_name: string
+          file_path: string
+          id?: string
+          uploaded_at?: string | null
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          uploaded_at?: string | null
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
