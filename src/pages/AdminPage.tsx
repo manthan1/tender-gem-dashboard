@@ -19,9 +19,41 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
+interface Profile {
+  full_name: string | null;
+  id: string;
+}
+
+interface UserBid {
+  id: string;
+  user_id: string;
+  bid_amount: number;
+  tender_id: number;
+  created_at: string;
+  notes: string | null;
+  tender?: {
+    bid_number: string;
+    category: string;
+    ministry: string;
+    department: string;
+  };
+  profile?: Profile;
+}
+
+interface UserDocument {
+  id: string;
+  user_id: string;
+  document_type: string;
+  file_name: string;
+  uploaded_at: string;
+  verified: boolean;
+  profile?: Profile;
+}
+
 const AdminPage = () => {
-  const [bids, setBids] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [bids, setBids] = useState<UserBid[]>([]);
+  const [documents, setDocuments] = useState<UserDocument[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -32,6 +64,22 @@ const AdminPage = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
+      // Fetch all profiles first to use as a lookup table
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name');
+
+      if (profilesError) throw profilesError;
+      
+      // Create a lookup map of user_id to profile
+      const profilesMap: Record<string, Profile> = {};
+      if (profilesData) {
+        profilesData.forEach((profile: Profile) => {
+          profilesMap[profile.id] = profile;
+        });
+      }
+      setProfiles(profilesMap);
+
       // Fetch all bids with tender and user information
       const { data: bidsData, error: bidsError } = await supabase
         .from('user_bids')
@@ -39,7 +87,14 @@ const AdminPage = () => {
         .order('created_at', { ascending: false });
 
       if (bidsError) throw bidsError;
-      setBids(bidsData || []);
+      
+      // Attach profile data to each bid
+      const bidsWithProfiles = (bidsData || []).map((bid: UserBid) => ({
+        ...bid,
+        profile: profilesMap[bid.user_id]
+      }));
+      
+      setBids(bidsWithProfiles);
 
       // Fetch all documents
       const { data: docsData, error: docsError } = await supabase
@@ -48,7 +103,14 @@ const AdminPage = () => {
         .order('uploaded_at', { ascending: false });
 
       if (docsError) throw docsError;
-      setDocuments(docsData || []);
+      
+      // Attach profile data to each document
+      const docsWithProfiles = (docsData || []).map((doc: UserDocument) => ({
+        ...doc,
+        profile: profilesMap[doc.user_id]
+      }));
+      
+      setDocuments(docsWithProfiles);
 
     } catch (error: any) {
       console.error("Error fetching admin data:", error);
@@ -60,6 +122,11 @@ const AdminPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getUserName = (userId: string): string => {
+    const profile = profiles[userId];
+    return profile?.full_name || userId;
   };
 
   return (
@@ -95,7 +162,7 @@ const AdminPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="font-medium">User ID</TableHead>
+                          <TableHead className="font-medium">User</TableHead>
                           <TableHead className="font-medium">Tender</TableHead>
                           <TableHead className="font-medium">Bid Amount</TableHead>
                           <TableHead className="font-medium">Created</TableHead>
@@ -120,7 +187,7 @@ const AdminPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="font-medium">User ID</TableHead>
+                          <TableHead className="font-medium">User</TableHead>
                           <TableHead className="font-medium">Tender</TableHead>
                           <TableHead className="font-medium">Bid Amount</TableHead>
                           <TableHead className="font-medium">Created</TableHead>
@@ -135,7 +202,12 @@ const AdminPage = () => {
                         ) : (
                           bids.map((bid) => (
                             <TableRow key={bid.id}>
-                              <TableCell className="font-mono text-xs">{bid.user_id}</TableCell>
+                              <TableCell>
+                                {bid.profile?.full_name || "Unknown User"}
+                                <div className="text-xs text-gray-500 mt-1 font-mono">
+                                  {bid.user_id}
+                                </div>
+                              </TableCell>
                               <TableCell>
                                 {bid.tender?.bid_number || `Tender #${bid.tender_id}`}
                                 <div className="text-xs text-gray-500 mt-1">
@@ -168,7 +240,7 @@ const AdminPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="font-medium">User ID</TableHead>
+                          <TableHead className="font-medium">User</TableHead>
                           <TableHead className="font-medium">Document Type</TableHead>
                           <TableHead className="font-medium">File Name</TableHead>
                           <TableHead className="font-medium">Uploaded</TableHead>
@@ -193,7 +265,7 @@ const AdminPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="font-medium">User ID</TableHead>
+                          <TableHead className="font-medium">User</TableHead>
                           <TableHead className="font-medium">Document Type</TableHead>
                           <TableHead className="font-medium">File Name</TableHead>
                           <TableHead className="font-medium">Uploaded</TableHead>
@@ -208,7 +280,12 @@ const AdminPage = () => {
                         ) : (
                           documents.map((doc) => (
                             <TableRow key={doc.id}>
-                              <TableCell className="font-mono text-xs">{doc.user_id}</TableCell>
+                              <TableCell>
+                                {doc.profile?.full_name || "Unknown User"}
+                                <div className="text-xs text-gray-500 mt-1 font-mono">
+                                  {doc.user_id}
+                                </div>
+                              </TableCell>
                               <TableCell>{doc.document_type}</TableCell>
                               <TableCell>{doc.file_name}</TableCell>
                               <TableCell>
