@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -13,21 +13,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
 
-  console.log("ProtectedRoute - Path:", location.pathname);
-  
-  // Special case for admin pages - bypass authentication checks
-  if (location.pathname === "/admin" || location.pathname.startsWith("/admin/")) {
-    // Direct access to admin pages, no checks needed
-    console.log("Admin route - bypassing authentication checks");
-    return <>{children}</>;
-  } 
-  // For other routes, check authentication
-  else if (!isAuthenticated) {
-    toast({
-      title: "Authentication required",
-      description: "Please log in to access this page.",
-      variant: "destructive",
-    });
+  console.log("ProtectedRoute - Auth state:", { isAuthenticated, userId: user?.id });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to access this page.",
+        variant: "destructive",
+      });
+    }
+  }, [isAuthenticated, toast]);
+
+  if (!isAuthenticated) {
+    // Redirect to login but remember where they were trying to go
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 

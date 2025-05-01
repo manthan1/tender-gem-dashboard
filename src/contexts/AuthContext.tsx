@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  adminLogin: (email: string) => Promise<void>; 
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   session: Session | null;
@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
@@ -32,17 +33,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(!!currentSession);
         
         if (event === 'SIGNED_IN') {
-          if (currentSession?.user?.email === "admin@gmail.com") {
-            navigate("/admin");
-          } else {
-            navigate("/dashboard");
-          }
+          navigate("/dashboard");
         } else if (event === 'SIGNED_OUT') {
           navigate("/");
         }
       }
     );
 
+    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -71,85 +69,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({
         title: "Login failed",
         description: error.message || "Failed to log in. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  const adminLogin = async (email: string) => {
-    try {
-      const adminEmail = "admin@example.com";
-      const adminPassword = "Admin123!@#";
-      
-      console.log("Attempting admin login...");
-      
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
-        email: adminEmail, 
-        password: adminPassword
-      });
-      
-      if (signInError) {
-        console.log("Admin sign-in failed, attempting signup:", signInError.message);
-        
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ 
-          email: adminEmail, 
-          password: adminPassword,
-          options: {
-            data: {
-              is_admin: true,
-              full_name: "Administrator",
-            }
-          }
-        });
-        
-        if (signUpError) {
-          console.error("Admin signup failed:", signUpError);
-          throw new Error("Could not create admin account: " + signUpError.message);
-        }
-        
-        const { error: finalSignInError } = await supabase.auth.signInWithPassword({ 
-          email: adminEmail, 
-          password: adminPassword
-        });
-        
-        if (finalSignInError) {
-          throw finalSignInError;
-        }
-        
-        console.log("Admin account created and signed in successfully");
-        
-        const { error: adminInsertError } = await supabase
-          .from('admin_users')
-          .insert([{ id: signUpData.user?.id }]);
-          
-        if (adminInsertError) {
-          console.error("Error adding to admin_users:", adminInsertError);
-        }
-      } else {
-        console.log("Admin sign-in successful");
-        
-        if (signInData.user) {
-          const { error: adminUpsertError } = await supabase
-            .from('admin_users')
-            .upsert([{ id: signInData.user.id }]);
-            
-          if (adminUpsertError) {
-            console.error("Error upserting to admin_users:", adminUpsertError);
-          }
-        }
-      }
-
-      toast({
-        title: "Admin Login Successful",
-        description: "Welcome to the admin dashboard.",
-      });
-      
-    } catch (error: any) {
-      console.error("Admin login process error:", error);
-      toast({
-        title: "Admin Login Failed",
-        description: error.message || "Invalid admin credentials.",
         variant: "destructive",
       });
       throw error;
@@ -208,15 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated, 
-      user, 
-      session, 
-      login, 
-      adminLogin, 
-      signup, 
-      logout 
-    }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, session, login, signup, logout }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );
