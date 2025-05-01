@@ -28,7 +28,7 @@ const AdminLoginPage = () => {
     resolver: zodResolver(adminLoginSchema),
     defaultValues: {
       email: "admin@gmail.com", // Pre-filled for testing
-      password: "",
+      password: "1234", // Pre-filled for testing
     },
   });
 

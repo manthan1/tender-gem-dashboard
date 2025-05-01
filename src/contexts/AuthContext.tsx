@@ -83,12 +83,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const adminLogin = async (email: string, password: string) => {
     try {
-      // Validate admin credentials (for testing purposes only)
+      // For admin@gmail.com, we'll first check if the password is "1234"
       if (email === "admin@gmail.com" && password === "1234") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        // If the email/password match, proceed with authentication
+        const { error } = await supabase.auth.signInWithPassword({ 
+          email, 
+          password 
+        });
         
         if (error) {
-          throw error;
+          // If there's an error with Supabase authentication, try signing up the admin
+          // This is needed the first time an admin logs in
+          const signUpResult = await supabase.auth.signUp({ 
+            email, 
+            password,
+            options: {
+              data: {
+                is_admin: true,
+                full_name: "Administrator",
+              }
+            }
+          });
+          
+          if (signUpResult.error) {
+            throw signUpResult.error;
+          }
+          
+          // After signup, try to sign in again
+          const signInResult = await supabase.auth.signInWithPassword({ email, password });
+          if (signInResult.error) {
+            throw signInResult.error;
+          }
         }
         
         toast({
