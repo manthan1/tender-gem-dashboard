@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,8 +15,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Download, Check, File } from "lucide-react";
+import { Download, Check, File } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
@@ -217,14 +215,8 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
           <h1 className="text-2xl font-semibold text-gray-900">Admin Dashboard</h1>
-          <Link to="/dashboard">
-            <Button variant="outline" className="flex gap-2 items-center">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </Link>
         </div>
       </header>
 
@@ -313,7 +305,7 @@ const AdminPage = () => {
             </Card>
           </TabsContent>
           
-          {/* Documents Tab - Reorganized to show documents by user with verification */}
+          {/* Documents Tab */}
           <TabsContent value="documents">
             <Card>
               <CardHeader>
