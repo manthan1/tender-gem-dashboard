@@ -24,6 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
     if (adminOnly && isAuthenticated && user?.id) {
       const checkAdminStatus = async () => {
         try {
+          console.log("Checking admin status for user:", user.id);
           const { data, error } = await supabase
             .rpc('is_admin', { _user_id: user.id });
           
@@ -31,6 +32,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
             console.error("Error checking admin status:", error);
             setIsAdmin(false);
           } else {
+            console.log("Admin status result:", data);
             setIsAdmin(!!data);
           }
         } catch (err) {
@@ -42,6 +44,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
       };
       
       checkAdminStatus();
+    } else if (!adminOnly) {
+      // If not an admin-only route, we don't need to wait for admin check
+      setIsLoading(false);
     }
   }, [adminOnly, isAuthenticated, user?.id]);
 
@@ -75,7 +80,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
     }
     
     // Not an admin
-    if (!isAdmin) {
+    if (isAdmin === false) {
       return <Navigate to="/dashboard" replace />;
     }
   }
