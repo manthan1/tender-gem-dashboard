@@ -9,9 +9,11 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+
+  console.log("ProtectedRoute - Auth state:", { isAuthenticated, userId: user?.id });
 
   useEffect(() => {
     if (!isAuthenticated) {

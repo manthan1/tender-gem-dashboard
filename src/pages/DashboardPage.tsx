@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import FilterBar from "@/components/FilterBar";
 import TenderTable from "@/components/TenderTable";
@@ -7,6 +7,7 @@ import TablePagination from "@/components/TablePagination";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGemBids, useFilterOptions } from "@/hooks/useGemBids";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Filters {
   ministry: string;
@@ -20,6 +21,7 @@ interface Filters {
 
 const DashboardPage = () => {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<Filters>({
     ministry: "",
@@ -39,7 +41,7 @@ const DashboardPage = () => {
   }), [filters]);
 
   // Initialize data fetching with the optimized hook
-  const { bids, totalPages, loading, error } = useGemBids(currentPage, processedFilters);
+  const { bids, totalPages, loading, error, refetch } = useGemBids(currentPage, processedFilters);
   
   // Get filter options with cached data
   const { options: ministries } = useFilterOptions("ministry");
@@ -56,8 +58,15 @@ const DashboardPage = () => {
     setCurrentPage(page);
   }, []);
 
+  // Refetch data when authenticated status changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      refetch();
+    }
+  }, [isAuthenticated, refetch]);
+
   // Show error toast if API call fails
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
       toast({
         title: "Error fetching data",

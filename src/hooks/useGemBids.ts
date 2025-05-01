@@ -1,5 +1,7 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface GemBid {
   id: number;
@@ -42,6 +44,7 @@ export const useGemBids = (
   page: number,
   filters: Filters = {}
 ) => {
+  const { isAuthenticated } = useAuth();
   const [bids, setBids] = useState<GemBid[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,10 +67,20 @@ export const useGemBids = (
 
   // Stable fetchBids function with deduplication
   const fetchBids = useCallback(async (skipLoading = false) => {
+    if (!isAuthenticated) {
+      console.log("User not authenticated, skipping data fetch");
+      return;
+    }
+    
     // Generate cache key for this specific query
     const cacheKey = generateCacheKey(page, filters);
     
     try {
+      // Set loading state unless told to skip it (for refetches/background updates)
+      if (!skipLoading) {
+        setLoading(true);
+      }
+      
       // First check cache
       const cachedData = dataCache.get(cacheKey);
       if (cachedData && Date.now() - cachedData.timestamp < CACHE_EXPIRY) {
@@ -135,12 +148,18 @@ export const useGemBids = (
       
       ongoingRequests.set(cacheKey, requestPromise);
       
+      console.log("Fetching data from Supabase:", cacheKey);
       const { data, error, count } = await requestPromise;
       
       // Remove from ongoing requests
       ongoingRequests.delete(cacheKey);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase query error:", error);
+        throw error;
+      }
+      
+      console.log("Received data:", data?.length || 0, "rows, count:", count);
       
       if (isMounted.current) {
         // Cache the results
@@ -168,11 +187,26 @@ export const useGemBids = (
         setError(err.message);
       }
     }
-  }, [page, filters, pageSize, start]);
+  }, [page, filters, pageSize, start, isAuthenticated]);
+
+  // Add explicit refetch function
+  const refetch = useCallback(() => {
+    // Clear cache for this query
+    const cacheKey = generateCacheKey(page, filters);
+    dataCache.delete(cacheKey);
+    // Fetch fresh data
+    fetchBids(false);
+  }, [fetchBids, page, filters]);
 
   // Primary effect for data fetching with proper dependencies
   useEffect(() => {
     isMounted.current = true;
+    
+    // Skip if not authenticated
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     
     // Skip loading state for very quick cache hits
     const cacheKey = generateCacheKey(page, filters);
@@ -202,10 +236,13 @@ export const useGemBids = (
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [fetchBids]);
+  }, [fetchBids, isAuthenticated]);
 
   // Separate effect for prefetching next page - only run when appropriate
   useEffect(() => {
+    // Skip if not authenticated
+    if (!isAuthenticated) return;
+    
     // Only prefetch next page when current page data is loaded and stable
     if (bids.length > 0 && !loading && initialLoadComplete.current) {
       const nextPage = page + 1;
@@ -276,7 +313,7 @@ export const useGemBids = (
         return () => clearTimeout(prefetchTimer);
       }
     }
-  }, [bids, loading, page, filters, pageSize]);
+  }, [bids, loading, page, filters, pageSize, isAuthenticated]);
 
   return {
     bids,
@@ -284,11 +321,13 @@ export const useGemBids = (
     totalPages: Math.ceil(totalCount / pageSize),
     loading,
     error,
+    refetch, // Expose the refetch function
   };
 };
 
 // Optimized hook to fetch filter options
 export const useFilterOptions = (field: "ministry" | "department") => {
+  const { isAuthenticated } = useAuth();
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const requestRef = useRef<Promise<any> | null>(null);
@@ -296,6 +335,12 @@ export const useFilterOptions = (field: "ministry" | "department") => {
 
   useEffect(() => {
     let isMounted = true;
+    
+    // Skip if not authenticated
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     
     // Check cache first
     const cachedOptions = filterOptionsCache.get(field);
@@ -333,7 +378,12 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         const { data, error } = await promise;
         requestRef.current = null;
 
-        if (error) throw error;
+        if (error) {
+          console.error(`Error fetching ${field} options:`, error);
+          throw error;
+        }
+        
+        console.log(`Received ${field} options:`, data?.length || 0);
         
         // Extract unique values
         const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
@@ -363,7 +413,7 @@ export const useFilterOptions = (field: "ministry" | "department") => {
     return () => {
       isMounted = false;
     };
-  }, [field]);
+  }, [field, isAuthenticated]);
 
   return { options, loading };
 };
