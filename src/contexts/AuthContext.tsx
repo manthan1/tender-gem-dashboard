@@ -83,8 +83,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const adminLogin = async (email: string, password: string) => {
     try {
-      // For admin@gmail.com, we'll first check if the password is "1234"
-      if (email === "admin@gmail.com" && password === "1234") {
+      // For admin@gmail.com, we'll first check if the password is "123456"
+      if (email === "admin@gmail.com" && password === "123456") {
         // If the email/password match, proceed with authentication
         const { error } = await supabase.auth.signInWithPassword({ 
           email, 

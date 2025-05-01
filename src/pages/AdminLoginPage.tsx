@@ -14,7 +14,7 @@ import { Loader2, Shield } from "lucide-react";
 // Admin login form schema
 const adminLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(4, "Password must be at least 4 characters."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
 type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
@@ -28,7 +28,7 @@ const AdminLoginPage = () => {
     resolver: zodResolver(adminLoginSchema),
     defaultValues: {
       email: "admin@gmail.com", // Pre-filled for testing
-      password: "1234", // Pre-filled for testing
+      password: "123456", // Updated to 6 characters
     },
   });
 
