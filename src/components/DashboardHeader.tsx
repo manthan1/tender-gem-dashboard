@@ -1,11 +1,9 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { RefreshCw, User, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -66,13 +64,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onRefresh }) => {
       <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">GeM Tenders Dashboard</h1>
         <div className="flex gap-2 items-center">
-          <Link to="/admin">
-            <Button variant="outline" className="flex gap-2 items-center">
-              <Settings className="h-4 w-4" />
-              Admin Mode
-            </Button>
-          </Link>
-          
           <Button 
             variant="outline" 
             onClick={handleFetchNewBids} 
