@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Loader2, Download, Check, X } from "lucide-react";
+import { Download, Check, X, Loader2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,10 +15,8 @@ interface AdminDocument {
   file_path: string;
   uploaded_at: string | null;
   verified: boolean | null;
-  user: {
-    id: string;
-    email: string;
-  };
+  user_id: string;
+  user_email?: string;
 }
 
 export const AdminDocumentsTable: React.FC = () => {
@@ -32,7 +30,8 @@ export const AdminDocumentsTable: React.FC = () => {
       try {
         setLoading(true);
         
-        const { data, error } = await supabase
+        // Fetch documents without user information join
+        const { data: docsData, error: docsError } = await supabase
           .from("user_documents")
           .select(`
             id,
@@ -41,40 +40,45 @@ export const AdminDocumentsTable: React.FC = () => {
             file_path,
             uploaded_at,
             verified,
-            user_id,
-            auth:user_id (
-              id,
-              email
-            )
+            user_id
           `);
         
-        if (error) throw error;
+        if (docsError) throw docsError;
         
-        // Transform the data to match our AdminDocument interface
-        const formattedDocs = data.map((doc: any) => ({
-          id: doc.id,
-          document_type: doc.document_type,
-          file_name: doc.file_name,
-          file_path: doc.file_path,
-          uploaded_at: doc.uploaded_at,
-          verified: doc.verified,
-          user: {
-            id: doc.auth?.id || "Unknown",
-            email: doc.auth?.email || "Unknown",
-          }
-        }));
+        // Now, for each document, get the user email from profiles or auth metadata
+        // We'll use separate queries since we can't directly join with auth.users
+        const docsWithUserInfo = await Promise.all(
+          docsData.map(async (doc: any) => {
+            // Get user email from profiles if available
+            const { data: userData, error: userError } = await supabase
+              .from("profiles")
+              .select("username, full_name")
+              .eq("id", doc.user_id)
+              .single();
+            
+            return {
+              ...doc,
+              user_email: userData?.username || "Unknown User",
+            };
+          })
+        );
         
-        setDocuments(formattedDocs);
+        setDocuments(docsWithUserInfo);
       } catch (err: any) {
         console.error("Error fetching admin documents:", err);
         setError(err.message);
+        toast({
+          title: "Error",
+          description: "Failed to load documents: " + err.message,
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchDocuments();
-  }, []);
+  }, [toast]);
 
   const handleDownload = async (doc: AdminDocument) => {
     try {
@@ -181,7 +185,7 @@ export const AdminDocumentsTable: React.FC = () => {
           ) : (
             documents.map((doc) => (
               <TableRow key={doc.id}>
-                <TableCell>{doc.user.email}</TableCell>
+                <TableCell>{doc.user_email}</TableCell>
                 <TableCell>{formatDocumentType(doc.document_type)}</TableCell>
                 <TableCell>{doc.file_name}</TableCell>
                 <TableCell>

@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Loader2, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminBid {
   id: string;
@@ -12,11 +12,9 @@ interface AdminBid {
   created_at: string;
   notes: string | null;
   tender_id: number;
-  user: {
-    id: string;
-    email: string;
-  };
-  tender: {
+  user_id: string;
+  user_email?: string;
+  tender?: {
     bid_number: string;
     ministry: string;
     department: string;
@@ -27,13 +25,15 @@ export const AdminBidsTable: React.FC = () => {
   const [bids, setBids] = useState<AdminBid[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchBids = async () => {
       try {
         setLoading(true);
         
-        const { data, error } = await supabase
+        // First, fetch bids with tender information but without user details
+        const { data: bidsData, error: bidsError } = await supabase
           .from("user_bids")
           .select(`
             id,
@@ -46,44 +46,45 @@ export const AdminBidsTable: React.FC = () => {
               bid_number,
               ministry,
               department
-            ),
-            auth:user_id (
-              id,
-              email
             )
           `);
         
-        if (error) throw error;
+        if (bidsError) throw bidsError;
         
-        // Transform the data to match our AdminBid interface
-        const formattedBids = data.map((bid: any) => ({
-          id: bid.id,
-          bid_amount: bid.bid_amount,
-          created_at: bid.created_at,
-          notes: bid.notes,
-          tender_id: bid.tender_id,
-          user: {
-            id: bid.auth?.id || "Unknown",
-            email: bid.auth?.email || "Unknown",
-          },
-          tender: {
-            bid_number: bid.tenders_gem?.bid_number || "Unknown",
-            ministry: bid.tenders_gem?.ministry || "Unknown",
-            department: bid.tenders_gem?.department || "Unknown",
-          }
-        }));
+        // Now, for each bid, get the user email from auth.users
+        // We'll use separate queries since we can't directly join with auth.users
+        const bidsWithUserInfo = await Promise.all(
+          bidsData.map(async (bid: any) => {
+            // Get user email from profiles or auth metadata if available
+            const { data: userData, error: userError } = await supabase
+              .from("profiles")
+              .select("username, full_name")
+              .eq("id", bid.user_id)
+              .single();
+            
+            return {
+              ...bid,
+              user_email: userData?.username || "Unknown User",
+            };
+          })
+        );
         
-        setBids(formattedBids);
+        setBids(bidsWithUserInfo);
       } catch (err: any) {
         console.error("Error fetching admin bids:", err);
         setError(err.message);
+        toast({
+          title: "Error",
+          description: "Failed to load bids: " + err.message,
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchBids();
-  }, []);
+  }, [toast]);
 
   if (loading) {
     return (
@@ -127,11 +128,11 @@ export const AdminBidsTable: React.FC = () => {
           ) : (
             bids.map((bid) => (
               <TableRow key={bid.id}>
-                <TableCell>{bid.user.email}</TableCell>
-                <TableCell>{bid.tender.bid_number}</TableCell>
+                <TableCell>{bid.user_email}</TableCell>
+                <TableCell>{bid.tenders_gem?.bid_number || "Unknown"}</TableCell>
                 <TableCell>₹{bid.bid_amount.toLocaleString()}</TableCell>
-                <TableCell>{bid.tender.ministry}</TableCell>
-                <TableCell>{bid.tender.department}</TableCell>
+                <TableCell>{bid.tenders_gem?.ministry || "Not specified"}</TableCell>
+                <TableCell>{bid.tenders_gem?.department || "Not specified"}</TableCell>
                 <TableCell>
                   {format(new Date(bid.created_at), "dd MMM yyyy")}
                 </TableCell>

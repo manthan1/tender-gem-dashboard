@@ -1,14 +1,18 @@
 
 import React, { useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Automatically redirect to admin page
-    navigate("/admin");
+    // Automatically redirect to admin page immediately
+    const redirectTimer = setTimeout(() => {
+      navigate("/admin");
+    }, 500); // Small delay for the loading animation to be visible
+    
+    return () => clearTimeout(redirectTimer);
   }, [navigate]);
 
   return (
