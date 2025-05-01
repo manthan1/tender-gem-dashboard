@@ -19,16 +19,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
 
   console.log("ProtectedRoute - Auth state:", { isAuthenticated, userId: user?.id });
 
-  // Check if user is an admin when needed
+  // Check if user is an admin when needed using our security definer function
   useEffect(() => {
     if (adminOnly && isAuthenticated && user?.id) {
       const checkAdminStatus = async () => {
         try {
           const { data, error } = await supabase
-            .from('admin_users')
-            .select('id')
-            .eq('id', user.id)
-            .single();
+            .rpc('is_admin', { _user_id: user.id });
           
           if (error) {
             console.error("Error checking admin status:", error);
