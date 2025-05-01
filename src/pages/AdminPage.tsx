@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, File } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
@@ -45,9 +45,19 @@ interface UserDocument {
   user_id: string;
   document_type: string;
   file_name: string;
+  file_path: string;
   uploaded_at: string;
-  verified: boolean;
+  verified: boolean | null;
   profile?: Profile;
+}
+
+interface GroupedDocuments {
+  [userId: string]: {
+    userName: string;
+    documents: {
+      [documentType: string]: UserDocument;
+    };
+  }
 }
 
 const AdminPage = () => {
@@ -96,7 +106,7 @@ const AdminPage = () => {
       
       setBids(bidsWithProfiles);
 
-      // Fetch all documents
+      // Fetch all documents with file_path included
       const { data: docsData, error: docsError } = await supabase
         .from('user_documents')
         .select('*')
@@ -124,10 +134,54 @@ const AdminPage = () => {
     }
   };
 
-  const getUserName = (userId: string): string => {
-    const profile = profiles[userId];
-    return profile?.full_name || userId;
+  const downloadDocument = async (document: UserDocument) => {
+    try {
+      // Create download URL
+      const { data, error } = await supabase.storage
+        .from("user_documents")
+        .download(document.file_path);
+
+      if (error) {
+        throw error;
+      }
+
+      // Create blob URL and trigger download
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = document.file_name;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download started",
+        description: `Downloading ${document.file_name}`,
+      });
+    } catch (error: any) {
+      console.error("Error downloading document:", error);
+      toast({
+        title: "Download failed",
+        description: error.message || "Failed to download document",
+        variant: "destructive",
+      });
+    }
   };
+
+  // Group documents by user
+  const groupedDocuments = documents.reduce((acc: GroupedDocuments, doc) => {
+    const userId = doc.user_id;
+    const userName = doc.profile?.full_name || userId;
+    
+    if (!acc[userId]) {
+      acc[userId] = {
+        userName,
+        documents: {}
+      };
+    }
+    
+    acc[userId].documents[doc.document_type] = doc;
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -228,11 +282,11 @@ const AdminPage = () => {
             </Card>
           </TabsContent>
           
-          {/* Documents Tab */}
+          {/* Documents Tab - Reorganized to show documents by user */}
           <TabsContent value="documents">
             <Card>
               <CardHeader>
-                <CardTitle>All User Documents</CardTitle>
+                <CardTitle>User Documents</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {loading ? (
@@ -241,10 +295,9 @@ const AdminPage = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="font-medium">User</TableHead>
-                          <TableHead className="font-medium">Document Type</TableHead>
-                          <TableHead className="font-medium">File Name</TableHead>
-                          <TableHead className="font-medium">Uploaded</TableHead>
-                          <TableHead className="font-medium">Status</TableHead>
+                          <TableHead className="font-medium">Aadhar</TableHead>
+                          <TableHead className="font-medium">PAN</TableHead>
+                          <TableHead className="font-medium">Driving License</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -252,9 +305,8 @@ const AdminPage = () => {
                           <TableRow key={index}>
                             <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -266,35 +318,78 @@ const AdminPage = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="font-medium">User</TableHead>
-                          <TableHead className="font-medium">Document Type</TableHead>
-                          <TableHead className="font-medium">File Name</TableHead>
-                          <TableHead className="font-medium">Uploaded</TableHead>
-                          <TableHead className="font-medium">Status</TableHead>
+                          <TableHead className="font-medium">Aadhar</TableHead>
+                          <TableHead className="font-medium">PAN</TableHead>
+                          <TableHead className="font-medium">Driving License</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {documents.length === 0 ? (
+                        {Object.keys(groupedDocuments).length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-4">No documents found</TableCell>
+                            <TableCell colSpan={4} className="text-center py-4">No documents found</TableCell>
                           </TableRow>
                         ) : (
-                          documents.map((doc) => (
-                            <TableRow key={doc.id}>
+                          Object.entries(groupedDocuments).map(([userId, userData]) => (
+                            <TableRow key={userId}>
                               <TableCell>
-                                {doc.profile?.full_name || "Unknown User"}
+                                {userData.userName || "Unknown User"}
                                 <div className="text-xs text-gray-500 mt-1 font-mono">
-                                  {doc.user_id}
+                                  {userId}
                                 </div>
                               </TableCell>
-                              <TableCell>{doc.document_type}</TableCell>
-                              <TableCell>{doc.file_name}</TableCell>
                               <TableCell>
-                                {doc.uploaded_at ? format(new Date(doc.uploaded_at), "dd MMM yyyy") : "Unknown"}
+                                {userData.documents['aadhar'] ? (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-1"
+                                    onClick={() => downloadDocument(userData.documents['aadhar'])}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                    <span>Aadhar</span>
+                                    <Badge variant={userData.documents['aadhar'].verified ? "default" : "outline"} className="ml-1 text-xs">
+                                      {userData.documents['aadhar'].verified ? "Verified" : "Pending"}
+                                    </Badge>
+                                  </Button>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">Not uploaded</span>
+                                )}
                               </TableCell>
                               <TableCell>
-                                <Badge variant={doc.verified ? "default" : "outline"}>
-                                  {doc.verified ? "Verified" : "Pending"}
-                                </Badge>
+                                {userData.documents['pan'] ? (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-1"
+                                    onClick={() => downloadDocument(userData.documents['pan'])}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                    <span>PAN</span>
+                                    <Badge variant={userData.documents['pan'].verified ? "default" : "outline"} className="ml-1 text-xs">
+                                      {userData.documents['pan'].verified ? "Verified" : "Pending"}
+                                    </Badge>
+                                  </Button>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">Not uploaded</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {userData.documents['driving_license'] ? (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-1"
+                                    onClick={() => downloadDocument(userData.documents['driving_license'])}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                    <span>License</span>
+                                    <Badge variant={userData.documents['driving_license'].verified ? "default" : "outline"} className="ml-1 text-xs">
+                                      {userData.documents['driving_license'].verified ? "Verified" : "Pending"}
+                                    </Badge>
+                                  </Button>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">Not uploaded</span>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))
