@@ -15,7 +15,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const DashboardHeader = () => {
+interface DashboardHeaderProps {
+  onRefresh?: () => Promise<void>;
+}
+
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onRefresh }) => {
   const { logout, user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -23,15 +27,21 @@ const DashboardHeader = () => {
   const handleFetchNewBids = async () => {
     setLoading(true);
     try {
+      // First call the edge function to fetch new bids
       const { data, error } = await supabase.functions.invoke('fetch-gem-bids');
       
       if (error) {
         throw new Error(error.message);
       }
       
+      // Then refresh the UI data if we have an onRefresh handler
+      if (onRefresh) {
+        await onRefresh();
+      }
+      
       toast({
         title: "Data fetching completed",
-        description: data.message || "Bid data has been updated",
+        description: data?.message || "Bid data has been updated",
         variant: "default",
       });
     } catch (error) {

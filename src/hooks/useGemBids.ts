@@ -53,7 +53,7 @@ export const useGemBids = (
   const debounceTimerRef = useRef<number | null>(null);
   const initialLoadComplete = useRef(false);
   
-  const pageSize = 20; // Changed from 10 to 20
+  const pageSize = 20;
   const start = (page - 1) * pageSize;
 
   // Clear debounce timer when component unmounts
@@ -70,6 +70,8 @@ export const useGemBids = (
     if (!isAuthenticated) {
       console.log("User not authenticated, skipping data fetch");
       setLoading(false);
+      setBids([]);
+      setTotalCount(0);
       return;
     }
     
@@ -190,18 +192,19 @@ export const useGemBids = (
 
   // Add explicit refetch function that will clear cache
   const refetch = useCallback(() => {
-    // Clear cache for this query to force fresh data
-    const cacheKey = generateCacheKey(page, filters);
-    dataCache.delete(cacheKey);
+    // Clear all cache to force fresh data
+    dataCache.clear();
+    filterOptionsCache.clear();
     
-    // Also clear any ongoing request for this data
-    if (ongoingRequests.has(cacheKey)) {
-      ongoingRequests.delete(cacheKey);
-    }
+    // Also clear any ongoing requests
+    ongoingRequests.forEach((_, key) => {
+      ongoingRequests.delete(key);
+    });
     
     // Start fresh fetch
+    console.log("Refetching all data...");
     return fetchBids(false);
-  }, [fetchBids, page, filters]);
+  }, [fetchBids]);
 
   // Primary effect for data fetching with proper dependencies
   useEffect(() => {
@@ -215,13 +218,11 @@ export const useGemBids = (
     // Check if the user just became authenticated
     if (isAuthenticated && user) {
       // Clear any cached data to ensure fresh load after authentication
-      const cacheKey = generateCacheKey(page, filters);
-      dataCache.delete(cacheKey);
+      dataCache.clear();
+      filterOptionsCache.clear();
       
       // Immediate fetch when user is authenticated
       fetchBids();
-    } else if (!isAuthenticated) {
-      setLoading(false);
     }
     
     return () => {
@@ -236,15 +237,6 @@ export const useGemBids = (
   useEffect(() => {
     if (!isAuthenticated) {
       return;
-    }
-    
-    // Skip loading state for very quick cache hits
-    const cacheKey = generateCacheKey(page, filters);
-    const cachedData = dataCache.get(cacheKey);
-    
-    // Only show loading for completely new data, not cached data
-    if (!cachedData) {
-      setLoading(true);
     }
     
     // Debounce data fetching

@@ -58,6 +58,12 @@ const DashboardPage = () => {
     setCurrentPage(page);
   }, []);
 
+  // Handle refresh requests from DashboardHeader
+  const handleRefresh = useCallback(async () => {
+    console.log("Refreshing dashboard data...");
+    await refetch();
+  }, [refetch]);
+
   // Force refetch data when authenticated status changes
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -79,7 +85,7 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+      <DashboardHeader onRefresh={handleRefresh} />
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
           <FilterBar
