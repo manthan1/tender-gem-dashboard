@@ -6,16 +6,8 @@ import { DocumentUpload } from "@/components/DocumentUpload";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
 
 const DocumentsPage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
-  }
-
   return (
     <>
       <Helmet>

@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { Link } from "react-router-dom";
 import DashboardHeader from "@/components/DashboardHeader";
 import FilterBar from "@/components/FilterBar";
 import TenderTable from "@/components/TenderTable";
@@ -7,6 +8,8 @@ import TablePagination from "@/components/TablePagination";
 import UserBidsTable from "@/components/UserBidsTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 import { useGemBids, useFilterOptions } from "@/hooks/useGemBids";
 import { useUserBids } from "@/hooks/useUserBids";
 import { useToast } from "@/hooks/use-toast";
@@ -94,6 +97,16 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader onRefresh={handleRefresh} />
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-0 mb-6 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <Link to="/documents">
+            <Button variant="outline" className="flex gap-2">
+              <FileText className="h-4 w-4" />
+              My Documents
+            </Button>
+          </Link>
+        </div>
+        
         <div className="px-4 sm:px-0">
           <Tabs defaultValue="tenders" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
