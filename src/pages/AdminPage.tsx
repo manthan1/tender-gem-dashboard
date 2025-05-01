@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Download, File } from "lucide-react";
+import { ArrowLeft, Download, Check, File } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
@@ -65,6 +65,7 @@ const AdminPage = () => {
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
+  const [verifyingDoc, setVerifyingDoc] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -134,28 +135,28 @@ const AdminPage = () => {
     }
   };
 
-  const downloadDocument = async (document: UserDocument) => {
+  const downloadDocument = async (userDoc: UserDocument) => {
     try {
       // Create download URL
       const { data, error } = await supabase.storage
         .from("user_documents")
-        .download(document.file_path);
+        .download(userDoc.file_path);
 
       if (error) {
         throw error;
       }
 
-      // Create blob URL and trigger download
+      // Create blob URL and trigger download using window.document
       const url = URL.createObjectURL(data);
-      const a = document.createElement("a");
+      const a = window.document.createElement("a");
       a.href = url;
-      a.download = document.file_name;
+      a.download = userDoc.file_name;
       a.click();
       URL.revokeObjectURL(url);
 
       toast({
         title: "Download started",
-        description: `Downloading ${document.file_name}`,
+        description: `Downloading ${userDoc.file_name}`,
       });
     } catch (error: any) {
       console.error("Error downloading document:", error);
@@ -164,6 +165,36 @@ const AdminPage = () => {
         description: error.message || "Failed to download document",
         variant: "destructive",
       });
+    }
+  };
+  
+  const verifyDocument = async (docId: string) => {
+    setVerifyingDoc(docId);
+    try {
+      const { error } = await supabase
+        .from('user_documents')
+        .update({ verified: true })
+        .eq('id', docId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Document verified",
+        description: "Document has been marked as verified"
+      });
+      
+      // Refresh the documents list
+      fetchAllData();
+      
+    } catch (error: any) {
+      console.error("Error verifying document:", error);
+      toast({
+        title: "Verification failed",
+        description: error.message || "Failed to verify document",
+        variant: "destructive",
+      });
+    } finally {
+      setVerifyingDoc(null);
     }
   };
 
@@ -282,7 +313,7 @@ const AdminPage = () => {
             </Card>
           </TabsContent>
           
-          {/* Documents Tab - Reorganized to show documents by user */}
+          {/* Documents Tab - Reorganized to show documents by user with verification */}
           <TabsContent value="documents">
             <Card>
               <CardHeader>
@@ -339,54 +370,96 @@ const AdminPage = () => {
                               </TableCell>
                               <TableCell>
                                 {userData.documents['aadhar'] ? (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className="flex items-center gap-1"
-                                    onClick={() => downloadDocument(userData.documents['aadhar'])}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                    <span>Aadhar</span>
-                                    <Badge variant={userData.documents['aadhar'].verified ? "default" : "outline"} className="ml-1 text-xs">
-                                      {userData.documents['aadhar'].verified ? "Verified" : "Pending"}
-                                    </Badge>
-                                  </Button>
+                                  <div className="flex flex-col gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="flex items-center gap-1 w-fit"
+                                      onClick={() => downloadDocument(userData.documents['aadhar'])}
+                                    >
+                                      <Download className="h-3 w-3" />
+                                      <span>Aadhar</span>
+                                      <Badge variant={userData.documents['aadhar'].verified ? "default" : "outline"} className="ml-1 text-xs">
+                                        {userData.documents['aadhar'].verified ? "Verified" : "Pending"}
+                                      </Badge>
+                                    </Button>
+                                    {!userData.documents['aadhar'].verified && (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="flex items-center gap-1 w-fit text-green-600"
+                                        disabled={verifyingDoc === userData.documents['aadhar'].id}
+                                        onClick={() => verifyDocument(userData.documents['aadhar'].id)}
+                                      >
+                                        <Check className="h-3 w-3" />
+                                        <span>{verifyingDoc === userData.documents['aadhar'].id ? 'Verifying...' : 'Verify'}</span>
+                                      </Button>
+                                    )}
+                                  </div>
                                 ) : (
                                   <span className="text-gray-400 text-sm">Not uploaded</span>
                                 )}
                               </TableCell>
                               <TableCell>
                                 {userData.documents['pan'] ? (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className="flex items-center gap-1"
-                                    onClick={() => downloadDocument(userData.documents['pan'])}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                    <span>PAN</span>
-                                    <Badge variant={userData.documents['pan'].verified ? "default" : "outline"} className="ml-1 text-xs">
-                                      {userData.documents['pan'].verified ? "Verified" : "Pending"}
-                                    </Badge>
-                                  </Button>
+                                  <div className="flex flex-col gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="flex items-center gap-1 w-fit"
+                                      onClick={() => downloadDocument(userData.documents['pan'])}
+                                    >
+                                      <Download className="h-3 w-3" />
+                                      <span>PAN</span>
+                                      <Badge variant={userData.documents['pan'].verified ? "default" : "outline"} className="ml-1 text-xs">
+                                        {userData.documents['pan'].verified ? "Verified" : "Pending"}
+                                      </Badge>
+                                    </Button>
+                                    {!userData.documents['pan'].verified && (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="flex items-center gap-1 w-fit text-green-600"
+                                        disabled={verifyingDoc === userData.documents['pan'].id}
+                                        onClick={() => verifyDocument(userData.documents['pan'].id)}
+                                      >
+                                        <Check className="h-3 w-3" />
+                                        <span>{verifyingDoc === userData.documents['pan'].id ? 'Verifying...' : 'Verify'}</span>
+                                      </Button>
+                                    )}
+                                  </div>
                                 ) : (
                                   <span className="text-gray-400 text-sm">Not uploaded</span>
                                 )}
                               </TableCell>
                               <TableCell>
                                 {userData.documents['driving_license'] ? (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    className="flex items-center gap-1"
-                                    onClick={() => downloadDocument(userData.documents['driving_license'])}
-                                  >
-                                    <Download className="h-3 w-3" />
-                                    <span>License</span>
-                                    <Badge variant={userData.documents['driving_license'].verified ? "default" : "outline"} className="ml-1 text-xs">
-                                      {userData.documents['driving_license'].verified ? "Verified" : "Pending"}
-                                    </Badge>
-                                  </Button>
+                                  <div className="flex flex-col gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="flex items-center gap-1 w-fit"
+                                      onClick={() => downloadDocument(userData.documents['driving_license'])}
+                                    >
+                                      <Download className="h-3 w-3" />
+                                      <span>License</span>
+                                      <Badge variant={userData.documents['driving_license'].verified ? "default" : "outline"} className="ml-1 text-xs">
+                                        {userData.documents['driving_license'].verified ? "Verified" : "Pending"}
+                                      </Badge>
+                                    </Button>
+                                    {!userData.documents['driving_license'].verified && (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="flex items-center gap-1 w-fit text-green-600"
+                                        disabled={verifyingDoc === userData.documents['driving_license'].id}
+                                        onClick={() => verifyDocument(userData.documents['driving_license'].id)}
+                                      >
+                                        <Check className="h-3 w-3" />
+                                        <span>{verifyingDoc === userData.documents['driving_license'].id ? 'Verifying...' : 'Verify'}</span>
+                                      </Button>
+                                    )}
+                                  </div>
                                 ) : (
                                   <span className="text-gray-400 text-sm">Not uploaded</span>
                                 )}
