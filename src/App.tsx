@@ -33,11 +33,7 @@ const App = () => (
                 <DocumentsPage />
               </ProtectedRoute>
             } />
-            <Route path="/admin" element={
-              <ProtectedRoute adminOnly={true}>
-                <AdminPage />
-              </ProtectedRoute>
-            } />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
