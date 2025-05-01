@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  adminLogin: (email: string) => Promise<void>; // Changed to not require password
+  adminLogin: (email: string) => Promise<void>; 
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   session: Session | null;
@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setSession(currentSession);
@@ -33,7 +32,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(!!currentSession);
         
         if (event === 'SIGNED_IN') {
-          // Redirect admin users to admin page, regular users to dashboard
           if (currentSession?.user?.email === "admin@gmail.com") {
             navigate("/admin");
           } else {
@@ -45,7 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -82,48 +79,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const adminLogin = async (email: string) => {
     try {
-      // For admin mode, we'll sign in as admin without password verification
-      if (email === "admin@gmail.com") {
-        // First try to sign in with any password (for existing admin)
-        const { data, error } = await supabase.auth.signInWithPassword({ 
-          email, 
-          password: "123456" // Using default password for admin
+      const adminEmail = "admin@example.com";
+      const adminPassword = "Admin123!@#";
+      
+      console.log("Attempting admin login...");
+      
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
+        email: adminEmail, 
+        password: adminPassword
+      });
+      
+      if (signInError) {
+        console.log("Admin sign-in failed, attempting signup:", signInError.message);
+        
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ 
+          email: adminEmail, 
+          password: adminPassword,
+          options: {
+            data: {
+              is_admin: true,
+              full_name: "Administrator",
+            }
+          }
         });
         
-        if (error) {
-          // If there's an error with Supabase authentication, try signing up the admin
-          const signUpResult = await supabase.auth.signUp({ 
-            email, 
-            password: "123456", // Using default password for admin
-            options: {
-              data: {
-                is_admin: true,
-                full_name: "Administrator",
-              }
-            }
-          });
-          
-          if (signUpResult.error) {
-            throw signUpResult.error;
-          }
-          
-          // After signup, try to sign in again
-          const signInResult = await supabase.auth.signInWithPassword({ email, password: "123456" });
-          if (signInResult.error) {
-            throw signInResult.error;
-          }
+        if (signUpError) {
+          console.error("Admin signup failed:", signUpError);
+          throw new Error("Could not create admin account: " + signUpError.message);
         }
         
-        toast({
-          title: "Admin Login Successful",
-          description: "Welcome to the admin dashboard.",
+        const { error: finalSignInError } = await supabase.auth.signInWithPassword({ 
+          email: adminEmail, 
+          password: adminPassword
         });
         
-        navigate("/admin");
+        if (finalSignInError) {
+          throw finalSignInError;
+        }
+        
+        console.log("Admin account created and signed in successfully");
+        
+        const { error: adminInsertError } = await supabase
+          .from('admin_users')
+          .insert([{ id: signUpData.user?.id }]);
+          
+        if (adminInsertError) {
+          console.error("Error adding to admin_users:", adminInsertError);
+        }
       } else {
-        throw new Error("Invalid admin email");
+        console.log("Admin sign-in successful");
+        
+        if (signInData.user) {
+          const { error: adminUpsertError } = await supabase
+            .from('admin_users')
+            .upsert([{ id: signInData.user.id }]);
+            
+          if (adminUpsertError) {
+            console.error("Error upserting to admin_users:", adminUpsertError);
+          }
+        }
       }
+
+      toast({
+        title: "Admin Login Successful",
+        description: "Welcome to the admin dashboard.",
+      });
+      
     } catch (error: any) {
+      console.error("Admin login process error:", error);
       toast({
         title: "Admin Login Failed",
         description: error.message || "Invalid admin credentials.",

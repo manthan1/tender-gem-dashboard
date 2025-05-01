@@ -3,6 +3,8 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,9 +15,29 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { toast } = useToast();
   const location = useLocation();
 
-  console.log("ProtectedRoute - Auth state:", { isAuthenticated, userId: user?.id });
+  // Check if user is an admin
+  const { data: isAdmin, isLoading: checkingAdmin } = useQuery({
+    queryKey: ['isAdmin', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error("Error checking admin status:", error);
+        return false;
+      }
+      return !!data;
+    },
+    enabled: !!user && location.pathname === "/admin"
+  });
+
+  console.log("ProtectedRoute - Auth state:", { isAuthenticated, userId: user?.id, isAdmin, checkingAdmin });
   
-  // Special case for admin page - require authentication and admin email
+  // Special case for admin page - require authentication and admin status
   if (location.pathname === "/admin") {
     if (!isAuthenticated) {
       toast({
@@ -26,8 +48,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
     
-    // Check if user has admin email
-    if (user?.email !== "admin@gmail.com") {
+    if (checkingAdmin) {
+      return <div className="flex items-center justify-center h-screen">Verifying admin access...</div>;
+    }
+    
+    // Check if user is admin
+    if (!isAdmin) {
       toast({
         title: "Admin access required",
         description: "You don't have permission to access the admin dashboard.",
