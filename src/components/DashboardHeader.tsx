@@ -1,8 +1,9 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw, User, Settings } from "lucide-react";
+import { RefreshCw, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   DropdownMenu, 
