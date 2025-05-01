@@ -10,10 +10,10 @@ const AdminLoginPage = () => {
   
   useEffect(() => {
     // Simplified direct access - no login required
-    console.log("Bypassing admin authentication, going directly to admin dashboard");
+    console.log("Direct access to admin dashboard, no authentication required");
     
     toast({
-      title: "Admin Access Granted",
+      title: "Admin Access",
       description: "Direct access to admin dashboard"
     });
     

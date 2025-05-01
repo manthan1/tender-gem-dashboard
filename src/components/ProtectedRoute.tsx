@@ -15,9 +15,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   console.log("ProtectedRoute - Path:", location.pathname);
   
-  // Special case for admin page - bypass authentication checks
-  if (location.pathname === "/admin") {
-    // Direct access to admin page, no checks needed
+  // Special case for admin pages - bypass authentication checks
+  if (location.pathname === "/admin" || location.pathname.startsWith("/admin/")) {
+    // Direct access to admin pages, no checks needed
+    console.log("Admin route - bypassing authentication checks");
     return <>{children}</>;
   } 
   // For other routes, check authentication

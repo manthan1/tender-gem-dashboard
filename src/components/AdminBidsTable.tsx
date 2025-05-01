@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,7 +13,6 @@ interface AdminBid {
   notes: string | null;
   tender_id: number;
   user_id: string;
-  user_email?: string;
   tenders_gem?: {
     bid_number: string;
     ministry: string;
@@ -31,8 +31,8 @@ export const AdminBidsTable: React.FC = () => {
       try {
         setLoading(true);
         
-        // Fetch bids with tender information using the admin access policy
-        const { data: bidsData, error: bidsError } = await supabase
+        // Fetch all bids without any restrictions
+        const { data, error } = await supabase
           .from("user_bids")
           .select(`
             id,
@@ -48,26 +48,10 @@ export const AdminBidsTable: React.FC = () => {
             )
           `);
         
-        if (bidsError) throw bidsError;
+        if (error) throw error;
         
-        // Now, for each bid, get the user email from profiles table
-        const bidsWithUserInfo = await Promise.all(
-          bidsData.map(async (bid: any) => {
-            // Get user email from profiles if available
-            const { data: userData, error: userError } = await supabase
-              .from("profiles")
-              .select("username, full_name")
-              .eq("id", bid.user_id)
-              .single();
-            
-            return {
-              ...bid,
-              user_email: userData?.username || "Unknown User",
-            };
-          })
-        );
-        
-        setBids(bidsWithUserInfo);
+        // Set the fetched data
+        setBids(data || []);
       } catch (err: any) {
         console.error("Error fetching admin bids:", err);
         setError(err.message);
@@ -107,7 +91,7 @@ export const AdminBidsTable: React.FC = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
+            <TableHead>User ID</TableHead>
             <TableHead>Tender</TableHead>
             <TableHead>Bid Amount</TableHead>
             <TableHead>Ministry</TableHead>
@@ -126,7 +110,7 @@ export const AdminBidsTable: React.FC = () => {
           ) : (
             bids.map((bid) => (
               <TableRow key={bid.id}>
-                <TableCell>{bid.user_email}</TableCell>
+                <TableCell>{bid.user_id}</TableCell>
                 <TableCell>{bid.tenders_gem?.bid_number || "Unknown"}</TableCell>
                 <TableCell>₹{bid.bid_amount.toLocaleString()}</TableCell>
                 <TableCell>{bid.tenders_gem?.ministry || "Not specified"}</TableCell>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,7 +16,6 @@ interface AdminDocument {
   uploaded_at: string | null;
   verified: boolean | null;
   user_id: string;
-  user_email?: string;
 }
 
 export const AdminDocumentsTable: React.FC = () => {
@@ -29,8 +29,8 @@ export const AdminDocumentsTable: React.FC = () => {
       try {
         setLoading(true);
         
-        // Fetch documents using the admin access policy
-        const { data: docsData, error: docsError } = await supabase
+        // Fetch all documents without any restrictions
+        const { data, error } = await supabase
           .from("user_documents")
           .select(`
             id,
@@ -42,26 +42,10 @@ export const AdminDocumentsTable: React.FC = () => {
             user_id
           `);
         
-        if (docsError) throw docsError;
+        if (error) throw error;
         
-        // Now, for each document, get the user email from profiles
-        const docsWithUserInfo = await Promise.all(
-          docsData.map(async (doc: any) => {
-            // Get user email from profiles if available
-            const { data: userData, error: userError } = await supabase
-              .from("profiles")
-              .select("username, full_name")
-              .eq("id", doc.user_id)
-              .single();
-            
-            return {
-              ...doc,
-              user_email: userData?.username || "Unknown User",
-            };
-          })
-        );
-        
-        setDocuments(docsWithUserInfo);
+        // Set the fetched data
+        setDocuments(data || []);
       } catch (err: any) {
         console.error("Error fetching admin documents:", err);
         setError(err.message);
@@ -165,7 +149,7 @@ export const AdminDocumentsTable: React.FC = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
+            <TableHead>User ID</TableHead>
             <TableHead>Document Type</TableHead>
             <TableHead>Filename</TableHead>
             <TableHead>Uploaded</TableHead>
@@ -183,7 +167,7 @@ export const AdminDocumentsTable: React.FC = () => {
           ) : (
             documents.map((doc) => (
               <TableRow key={doc.id}>
-                <TableCell>{doc.user_email}</TableCell>
+                <TableCell>{doc.user_id}</TableCell>
                 <TableCell>{formatDocumentType(doc.document_type)}</TableCell>
                 <TableCell>{doc.file_name}</TableCell>
                 <TableCell>
