@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  adminLogin: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   session: Session | null;
@@ -33,7 +34,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(!!currentSession);
         
         if (event === 'SIGNED_IN') {
-          navigate("/dashboard");
+          // Redirect admin users to admin page, regular users to dashboard
+          if (currentSession?.user?.email === "admin@gmail.com") {
+            navigate("/admin");
+          } else {
+            navigate("/dashboard");
+          }
         } else if (event === 'SIGNED_OUT') {
           navigate("/");
         }
@@ -69,6 +75,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({
         title: "Login failed",
         description: error.message || "Failed to log in. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const adminLogin = async (email: string, password: string) => {
+    try {
+      // Validate admin credentials (for testing purposes only)
+      if (email === "admin@gmail.com" && password === "1234") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Admin Login Successful",
+          description: "Welcome to the admin dashboard.",
+        });
+        
+        navigate("/admin");
+      } else {
+        throw new Error("Invalid admin credentials");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Admin Login Failed",
+        description: error.message || "Invalid admin credentials.",
         variant: "destructive",
       });
       throw error;
@@ -127,7 +162,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, session, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      user, 
+      session, 
+      login, 
+      adminLogin, 
+      signup, 
+      logout 
+    }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );

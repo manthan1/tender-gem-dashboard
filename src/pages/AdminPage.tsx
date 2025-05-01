@@ -17,11 +17,9 @@ const AdminPage: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   
   useEffect(() => {
-    // Check if user is admin - in a real app, you would check a database role
-    // For now, let's assume a specific user ID is an admin
+    // Check if user is admin - for testing purposes, we're checking for a specific email
     if (user) {
-      // This is a simplified check - in a production app you'd use proper role-based checks
-      if (user.email === "admin@example.com") {
+      if (user.email === "admin@gmail.com") {
         setIsAdmin(true);
       } else {
         toast({
@@ -35,7 +33,7 @@ const AdminPage: React.FC = () => {
 
   // Redirect to dashboard if not authenticated or not admin
   if (!isAuthenticated) {
-    return <Navigate to="/" />;
+    return <Navigate to="/admin/login" />;
   }
   
   if (isAuthenticated && !isAdmin) {
