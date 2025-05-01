@@ -45,7 +45,13 @@ export const useUserDocuments = () => {
         throw error;
       }
 
-      setDocuments(data || []);
+      // Convert data string to our UserDocument type
+      const typedDocuments = data?.map(doc => ({
+        ...doc,
+        document_type: doc.document_type as DocumentType
+      })) || [];
+      
+      setDocuments(typedDocuments);
     } catch (err: any) {
       console.error("Error fetching user documents:", err);
       toast({
