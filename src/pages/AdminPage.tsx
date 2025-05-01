@@ -1,44 +1,14 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Helmet } from "react-helmet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
 import { AdminBidsTable } from "@/components/AdminBidsTable";
 import { AdminDocumentsTable } from "@/components/AdminDocumentsTable";
 
 const AdminPage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("bids");
-  const [isAdmin, setIsAdmin] = useState(false);
-  
-  useEffect(() => {
-    // Check if user is admin - for testing purposes, we're checking for a specific email
-    if (user) {
-      if (user.email === "admin@gmail.com") {
-        setIsAdmin(true);
-      } else {
-        toast({
-          title: "Access denied",
-          description: "You don't have admin privileges",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [user, toast]);
-
-  // Redirect to dashboard if not authenticated or not admin
-  if (!isAuthenticated) {
-    return <Navigate to="/admin/login" />;
-  }
-  
-  if (isAuthenticated && !isAdmin) {
-    return <Navigate to="/dashboard" />;
-  }
 
   return (
     <>
