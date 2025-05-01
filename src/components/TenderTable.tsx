@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Table,
@@ -25,8 +24,9 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   // Keep local state of bids to prevent flashing when data is loading
   const [displayBids, setDisplayBids] = useState<GemBid[]>(bids);
   const { isAuthenticated } = useAuth();
-  const { placeBid } = useUserBids();
+  const { placeBid, hasBidOnTender } = useUserBids();
   const [selectedTender, setSelectedTender] = useState<GemBid | null>(null);
+  const [existingBid, setExistingBid] = useState<ReturnType<typeof hasBidOnTender>>(null);
   const [bidModalOpen, setBidModalOpen] = useState(false);
   
   // Only update display bids when actual bids change and loading is complete
@@ -37,9 +37,11 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   }, [bids, loading]);
 
   const handleBidClick = useCallback((tender: GemBid) => {
+    const userBid = hasBidOnTender(tender.id);
     setSelectedTender(tender);
+    setExistingBid(userBid);
     setBidModalOpen(true);
-  }, []);
+  }, [hasBidOnTender]);
   
   // Create a reusable table header to avoid duplicating code
   const TableHeaders = React.memo(() => (
@@ -159,50 +161,53 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
       <Table>
         <TableHeaders />
         <TableBody>
-          {displayBids.map((bid) => (
-            <TableRow key={bid.id}>
-              <TableCell className="font-medium">{bid.bid_number}</TableCell>
-              <TableCell>{bid.category}</TableCell>
-              <TableCell>{bid.quantity}</TableCell>
-              <TableCell>{bid.ministry}</TableCell>
-              <TableCell>{bid.department}</TableCell>
-              <TableCell>
-                {bid.start_date 
-                  ? format(new Date(bid.start_date), "dd MMM yyyy")
-                  : "N/A"}
-              </TableCell>
-              <TableCell>
-                {bid.end_date 
-                  ? format(new Date(bid.end_date), "dd MMM yyyy")
-                  : "N/A"}
-              </TableCell>
-              <TableCell>
-                {bid.download_url ? (
-                  <a
-                    href={bid.download_url}
-                    className="text-blue-600 hover:text-blue-800 hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Download
-                  </a>
-                ) : (
-                  "N/A"
-                )}
-              </TableCell>
-              <TableCell>
-                {isAuthenticated && (
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => handleBidClick(bid)}
-                  >
-                    Place Bid
-                  </Button>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
+          {displayBids.map((bid) => {
+            const userHasBid = hasBidOnTender(bid.id);
+            return (
+              <TableRow key={bid.id}>
+                <TableCell className="font-medium">{bid.bid_number}</TableCell>
+                <TableCell>{bid.category}</TableCell>
+                <TableCell>{bid.quantity}</TableCell>
+                <TableCell>{bid.ministry}</TableCell>
+                <TableCell>{bid.department}</TableCell>
+                <TableCell>
+                  {bid.start_date 
+                    ? format(new Date(bid.start_date), "dd MMM yyyy")
+                    : "N/A"}
+                </TableCell>
+                <TableCell>
+                  {bid.end_date 
+                    ? format(new Date(bid.end_date), "dd MMM yyyy")
+                    : "N/A"}
+                </TableCell>
+                <TableCell>
+                  {bid.download_url ? (
+                    <a
+                      href={bid.download_url}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Download
+                    </a>
+                  ) : (
+                    "N/A"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {isAuthenticated && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleBidClick(bid)}
+                    >
+                      {userHasBid ? "Edit Bid" : "Place Bid"}
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
@@ -211,6 +216,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
         isOpen={bidModalOpen}
         onClose={() => setBidModalOpen(false)}
         tender={selectedTender}
+        existingBid={existingBid}
         onPlaceBid={placeBid}
       />
     </div>

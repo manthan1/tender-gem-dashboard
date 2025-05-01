@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,20 +8,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { GemBid } from "@/hooks/useGemBids";
+import { UserBid } from "@/hooks/useUserBids";
 
 interface PlaceBidModalProps {
   isOpen: boolean;
   onClose: () => void;
   tender: GemBid | null;
+  existingBid: UserBid | null;
   onPlaceBid: (tenderId: number, bidAmount: number, notes?: string) => Promise<{ success: boolean, error?: string }>;
 }
 
-const PlaceBidModal: React.FC<PlaceBidModalProps> = ({ isOpen, onClose, tender, onPlaceBid }) => {
+const PlaceBidModal: React.FC<PlaceBidModalProps> = ({ isOpen, onClose, tender, existingBid, onPlaceBid }) => {
   const [bidAmount, setBidAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  
+  // Set the initial values when the modal opens or when existingBid changes
+  useEffect(() => {
+    if (existingBid) {
+      setBidAmount(existingBid.bid_amount.toString());
+      setNotes(existingBid.notes || "");
+    } else {
+      setBidAmount("");
+      setNotes("");
+    }
+  }, [existingBid, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,13 +80,19 @@ const PlaceBidModal: React.FC<PlaceBidModalProps> = ({ isOpen, onClose, tender, 
 
   if (!tender) return null;
 
+  // Determine the modal title based on whether we're editing or creating
+  const modalTitle = existingBid ? "Update Bid" : "Place Bid";
+  const submitButtonText = existingBid ? "Update Bid" : "Place Bid";
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Place Bid</DialogTitle>
+          <DialogTitle>{modalTitle}</DialogTitle>
           <DialogDescription>
-            Enter your bid details for {tender.bid_number}
+            {existingBid 
+              ? `Update your bid details for ${tender.bid_number}` 
+              : `Enter your bid details for ${tender.bid_number}`}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -122,7 +141,7 @@ const PlaceBidModal: React.FC<PlaceBidModalProps> = ({ isOpen, onClose, tender, 
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Submitting..." : "Place Bid"}
+              {submitting ? "Submitting..." : submitButtonText}
             </Button>
           </DialogFooter>
         </form>

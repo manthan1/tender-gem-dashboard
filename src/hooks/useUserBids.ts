@@ -134,6 +134,11 @@ export const useUserBids = () => {
     }
   }, [isAuthenticated, user, toast, fetchUserBids]);
 
+  // Added function to check if a user has already bid on a tender
+  const hasBidOnTender = useCallback((tenderId: number): UserBid | null => {
+    return bids.find(bid => bid.tender_id === tenderId) || null;
+  }, [bids]);
+
   useEffect(() => {
     fetchUserBids();
   }, [fetchUserBids]);
@@ -143,6 +148,7 @@ export const useUserBids = () => {
     loading,
     error,
     fetchUserBids,
-    placeBid
+    placeBid,
+    hasBidOnTender
   };
 };
