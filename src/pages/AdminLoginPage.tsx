@@ -11,10 +11,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Shield } from "lucide-react";
 
-// Admin login form schema
+// Admin login form schema (email only)
 const adminLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
 type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
@@ -28,16 +27,26 @@ const AdminLoginPage = () => {
     resolver: zodResolver(adminLoginSchema),
     defaultValues: {
       email: "admin@gmail.com", // Pre-filled for testing
-      password: "123456", // Updated to 6 characters
     },
   });
 
   const handleAdminLogin = async (data: AdminLoginFormValues) => {
     setIsLoading(true);
     try {
-      await adminLogin(data.email, data.password);
+      await adminLogin(data.email);
     } catch (error) {
       console.error("Admin login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDirectAdminAccess = async () => {
+    setIsLoading(true);
+    try {
+      await adminLogin("admin@gmail.com");
+    } catch (error) {
+      console.error("Direct admin access error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +74,35 @@ const AdminLoginPage = () => {
             Access the GEM Tenders administration panel
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* One-click admin access button */}
+          <Button 
+            onClick={handleDirectAdminAccess} 
+            className="w-full bg-green-600 hover:bg-green-700"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Accessing Admin Mode
+              </>
+            ) : (
+              "Enter Admin Mode"
+            )}
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Or use email
+              </span>
+            </div>
+          </div>
+          
+          {/* Email-based admin login */}
           <Form {...adminForm}>
             <form onSubmit={adminForm.handleSubmit(handleAdminLogin)} className="space-y-4">
               <FormField
@@ -76,19 +113,6 @@ const AdminLoginPage = () => {
                     <FormLabel>Admin Email</FormLabel>
                     <FormControl>
                       <Input placeholder="admin@gmail.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={adminForm.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Enter your password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

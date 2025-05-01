@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +9,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 // Login form schema
 const loginSchema = z.object({
@@ -210,6 +210,11 @@ const LoginPage = () => {
             </TabsContent>
           </Tabs>
         </CardContent>
+        <CardFooter className="flex justify-center border-t pt-4">
+          <Link to="/admin/login" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            Access Admin Portal →
+          </Link>
+        </CardFooter>
       </Card>
     </div>
   );

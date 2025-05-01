@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  adminLogin: (email: string, password: string) => Promise<void>;
+  adminLogin: (email: string) => Promise<void>; // Changed to not require password
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   session: Session | null;
@@ -81,22 +80,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const adminLogin = async (email: string, password: string) => {
+  const adminLogin = async (email: string) => {
     try {
-      // For admin@gmail.com, we'll first check if the password is "123456"
-      if (email === "admin@gmail.com" && password === "123456") {
-        // If the email/password match, proceed with authentication
-        const { error } = await supabase.auth.signInWithPassword({ 
+      // For admin mode, we'll sign in as admin without password verification
+      if (email === "admin@gmail.com") {
+        // First try to sign in with any password (for existing admin)
+        const { data, error } = await supabase.auth.signInWithPassword({ 
           email, 
-          password 
+          password: "123456" // Using default password for admin
         });
         
         if (error) {
           // If there's an error with Supabase authentication, try signing up the admin
-          // This is needed the first time an admin logs in
           const signUpResult = await supabase.auth.signUp({ 
             email, 
-            password,
+            password: "123456", // Using default password for admin
             options: {
               data: {
                 is_admin: true,
@@ -110,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
           
           // After signup, try to sign in again
-          const signInResult = await supabase.auth.signInWithPassword({ email, password });
+          const signInResult = await supabase.auth.signInWithPassword({ email, password: "123456" });
           if (signInResult.error) {
             throw signInResult.error;
           }
@@ -123,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         navigate("/admin");
       } else {
-        throw new Error("Invalid admin credentials");
+        throw new Error("Invalid admin email");
       }
     } catch (error: any) {
       toast({
