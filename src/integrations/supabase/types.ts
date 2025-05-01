@@ -195,6 +195,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bids: {
+        Row: {
+          bid_amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          tender_id: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bid_amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          tender_id: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bid_amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          tender_id?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bids_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders_gem"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

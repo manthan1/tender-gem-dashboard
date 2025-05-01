@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -11,6 +11,10 @@ import {
 import { format } from "date-fns";
 import { GemBid } from "@/hooks/useGemBids";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import PlaceBidModal from "./PlaceBidModal";
+import { useUserBids } from "@/hooks/useUserBids";
 
 interface TenderTableProps {
   bids: GemBid[];
@@ -20,6 +24,10 @@ interface TenderTableProps {
 const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   // Keep local state of bids to prevent flashing when data is loading
   const [displayBids, setDisplayBids] = useState<GemBid[]>(bids);
+  const { isAuthenticated } = useAuth();
+  const { placeBid } = useUserBids();
+  const [selectedTender, setSelectedTender] = useState<GemBid | null>(null);
+  const [bidModalOpen, setBidModalOpen] = useState(false);
   
   // Only update display bids when actual bids change and loading is complete
   useEffect(() => {
@@ -27,6 +35,11 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
       setDisplayBids(bids);
     }
   }, [bids, loading]);
+
+  const handleBidClick = useCallback((tender: GemBid) => {
+    setSelectedTender(tender);
+    setBidModalOpen(true);
+  }, []);
   
   // Create a reusable table header to avoid duplicating code
   const TableHeaders = React.memo(() => (
@@ -40,6 +53,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
         <TableHead className="font-medium">Start Date</TableHead>
         <TableHead className="font-medium">End Date</TableHead>
         <TableHead className="font-medium">Download</TableHead>
+        <TableHead className="font-medium">Actions</TableHead>
       </TableRow>
     </TableHeader>
   ));
@@ -60,6 +74,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                 <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-20" /></TableCell>
               </TableRow>
             ))}
@@ -108,6 +123,17 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                     </a>
                   ) : (
                     "N/A"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {isAuthenticated && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleBidClick(bid)}
+                    >
+                      Place Bid
+                    </Button>
                   )}
                 </TableCell>
               </TableRow>
@@ -164,10 +190,29 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                   "N/A"
                 )}
               </TableCell>
+              <TableCell>
+                {isAuthenticated && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleBidClick(bid)}
+                  >
+                    Place Bid
+                  </Button>
+                )}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {/* Bid Modal */}
+      <PlaceBidModal 
+        isOpen={bidModalOpen}
+        onClose={() => setBidModalOpen(false)}
+        tender={selectedTender}
+        onPlaceBid={placeBid}
+      />
     </div>
   );
 };
