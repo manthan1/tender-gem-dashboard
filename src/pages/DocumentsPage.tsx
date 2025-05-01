@@ -21,7 +21,7 @@ const DocumentsPage: React.FC = () => {
       <Helmet>
         <title>My Documents | GEM Tender Portal</title>
       </Helmet>
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen bg-gray-50">
         <DashboardHeader />
         <main className="flex-1 container mx-auto py-6 px-4">
           <h1 className="text-2xl font-bold mb-6">My Documents</h1>
