@@ -44,7 +44,7 @@ export const useGemBids = (
   page: number,
   filters: Filters = {}
 ) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [bids, setBids] = useState<GemBid[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -69,6 +69,7 @@ export const useGemBids = (
   const fetchBids = useCallback(async (skipLoading = false) => {
     if (!isAuthenticated) {
       console.log("User not authenticated, skipping data fetch");
+      setLoading(false);
       return;
     }
     
@@ -99,7 +100,6 @@ export const useGemBids = (
         console.log("Using existing request for:", cacheKey);
         try {
           await ongoingRequests.get(cacheKey);
-          // This will set loading to false after the request completes
           return;
         } catch (err) {
           // If the shared request failed, continue to make a new one
@@ -142,21 +142,19 @@ export const useGemBids = (
         
       // Store the promise of the executed query in ongoing requests
       // Convert PromiseLike to full Promise using Promise.resolve
-      const requestPromise = Promise.resolve(query.then((result) => {
-        return result;
-      }));
+      const requestPromise = Promise.resolve(query);
       
       ongoingRequests.set(cacheKey, requestPromise);
       
       console.log("Fetching data from Supabase:", cacheKey);
-      const { data, error, count } = await requestPromise;
+      const { data, error: fetchError, count } = await requestPromise;
       
       // Remove from ongoing requests
       ongoingRequests.delete(cacheKey);
 
-      if (error) {
-        console.error("Supabase query error:", error);
-        throw error;
+      if (fetchError) {
+        console.error("Supabase query error:", fetchError);
+        throw fetchError;
       }
       
       console.log("Received data:", data?.length || 0, "rows, count:", count);
@@ -176,6 +174,7 @@ export const useGemBids = (
         setBids(data || []);
         setTotalCount(count || 0);
         initialLoadComplete.current = true;
+        setError(null);
       }
     } catch (err: any) {
       // Clean up ongoing request on error
@@ -187,24 +186,55 @@ export const useGemBids = (
         setError(err.message);
       }
     }
-  }, [page, filters, pageSize, start, isAuthenticated]);
+  }, [page, filters, pageSize, start, isAuthenticated, user]);
 
-  // Add explicit refetch function
+  // Add explicit refetch function that will clear cache
   const refetch = useCallback(() => {
-    // Clear cache for this query
+    // Clear cache for this query to force fresh data
     const cacheKey = generateCacheKey(page, filters);
     dataCache.delete(cacheKey);
-    // Fetch fresh data
-    fetchBids(false);
+    
+    // Also clear any ongoing request for this data
+    if (ongoingRequests.has(cacheKey)) {
+      ongoingRequests.delete(cacheKey);
+    }
+    
+    // Start fresh fetch
+    return fetchBids(false);
   }, [fetchBids, page, filters]);
 
   // Primary effect for data fetching with proper dependencies
   useEffect(() => {
     isMounted.current = true;
     
-    // Skip if not authenticated
     if (!isAuthenticated) {
       setLoading(false);
+      return;
+    }
+    
+    // Check if the user just became authenticated
+    if (isAuthenticated && user) {
+      // Clear any cached data to ensure fresh load after authentication
+      const cacheKey = generateCacheKey(page, filters);
+      dataCache.delete(cacheKey);
+      
+      // Immediate fetch when user is authenticated
+      fetchBids();
+    } else if (!isAuthenticated) {
+      setLoading(false);
+    }
+    
+    return () => {
+      isMounted.current = false;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [fetchBids, isAuthenticated, user]);
+
+  // Separate effect for handling changes to filters or page
+  useEffect(() => {
+    if (!isAuthenticated) {
       return;
     }
     
@@ -230,90 +260,7 @@ export const useGemBids = (
       debounceTimerRef.current = null;
     }, debounceTime);
     
-    return () => {
-      isMounted.current = false;
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [fetchBids, isAuthenticated]);
-
-  // Separate effect for prefetching next page - only run when appropriate
-  useEffect(() => {
-    // Skip if not authenticated
-    if (!isAuthenticated) return;
-    
-    // Only prefetch next page when current page data is loaded and stable
-    if (bids.length > 0 && !loading && initialLoadComplete.current) {
-      const nextPage = page + 1;
-      const nextCacheKey = generateCacheKey(nextPage, filters);
-      
-      // Only prefetch if not already cached and not already in progress
-      if (!dataCache.has(nextCacheKey) && !ongoingRequests.has(nextCacheKey)) {
-        // Wait a bit before prefetching to ensure it doesn't interfere with current rendering
-        const prefetchTimer = setTimeout(() => {
-          // Check cache again in case it was populated during the timeout
-          if (!dataCache.has(nextCacheKey) && !ongoingRequests.has(nextCacheKey)) {
-            console.log("Prefetching next page:", nextPage);
-            
-            // Create the query but wrap it with a promise for execution
-            let query = supabase
-              .from("tenders_gem")
-              .select("*", { count: "exact" });
-              
-            // Apply same filters
-            if (filters.ministry) {
-              query = query.eq("ministry", filters.ministry);
-            }
-            
-            if (filters.department) {
-              query = query.eq("department", filters.department);
-            }
-            
-            if (filters.dateRange?.from) {
-              query = query.gte("start_date", filters.dateRange.from.toISOString());
-            }
-            
-            if (filters.dateRange?.to) {
-              query = query.lte("start_date", filters.dateRange.to.toISOString());
-            }
-            
-            if (filters.search) {
-              query = query.or(
-                `bid_number.ilike.%${filters.search}%,category.ilike.%${filters.search}%`
-              );
-            }
-            
-            // Add range and ordering for the next page
-            query = query
-              .range((nextPage - 1) * pageSize, nextPage * pageSize - 1)
-              .order("start_date", { ascending: false });
-              
-            // Create and store the promise in ongoing requests
-            // Convert PromiseLike to full Promise using Promise.resolve
-            const prefetchPromise = Promise.resolve(query.then(result => result));
-            ongoingRequests.set(nextCacheKey, prefetchPromise);
-            
-            // Execute in background
-            prefetchPromise.then(({data, count}) => {
-              ongoingRequests.delete(nextCacheKey);
-              if (data && count !== null) {
-                dataCache.set(nextCacheKey, {
-                  data,
-                  count,
-                  timestamp: Date.now()
-                });
-              }
-            }).catch(() => {
-              ongoingRequests.delete(nextCacheKey);
-            });
-          }
-        }, 1500); // Longer delay for prefetching
-        
-        return () => clearTimeout(prefetchTimer);
-      }
-    }
-  }, [bids, loading, page, filters, pageSize, isAuthenticated]);
+  }, [page, filters, fetchBids, isAuthenticated]);
 
   return {
     bids,
@@ -364,13 +311,11 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         console.log(`Fetching ${field} options`);
         
         // Create and execute the query in one step
-        // Convert PromiseLike to full Promise using Promise.resolve
         const promise = Promise.resolve(
           supabase
             .from("tenders_gem")
             .select(field)
             .order(field)
-            .then(result => result)
         );
           
         requestRef.current = promise;
@@ -386,7 +331,7 @@ export const useFilterOptions = (field: "ministry" | "department") => {
         console.log(`Received ${field} options:`, data?.length || 0);
         
         // Extract unique values
-        const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
+        const uniqueValues = [...new Set(data?.map(item => item[field]).filter(Boolean) || [])];
         
         // Cache the results with timestamp
         filterOptionsCache.set(field, {

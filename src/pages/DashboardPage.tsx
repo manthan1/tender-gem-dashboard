@@ -21,7 +21,7 @@ interface Filters {
 
 const DashboardPage = () => {
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<Filters>({
     ministry: "",
@@ -58,12 +58,13 @@ const DashboardPage = () => {
     setCurrentPage(page);
   }, []);
 
-  // Refetch data when authenticated status changes
+  // Force refetch data when authenticated status changes
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
+      console.log("Authentication detected, fetching data...");
       refetch();
     }
-  }, [isAuthenticated, refetch]);
+  }, [isAuthenticated, user, refetch]);
 
   // Show error toast if API call fails
   useEffect(() => {

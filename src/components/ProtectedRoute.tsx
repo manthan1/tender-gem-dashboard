@@ -30,6 +30,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
+  // Only render children when authentication is confirmed
   return <>{children}</>;
 };
 
