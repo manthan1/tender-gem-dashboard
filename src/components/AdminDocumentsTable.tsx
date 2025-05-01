@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,7 +29,7 @@ export const AdminDocumentsTable: React.FC = () => {
       try {
         setLoading(true);
         
-        // Fetch documents without user information join
+        // Fetch documents using the admin access policy
         const { data: docsData, error: docsError } = await supabase
           .from("user_documents")
           .select(`
@@ -45,8 +44,7 @@ export const AdminDocumentsTable: React.FC = () => {
         
         if (docsError) throw docsError;
         
-        // Now, for each document, get the user email from profiles or auth metadata
-        // We'll use separate queries since we can't directly join with auth.users
+        // Now, for each document, get the user email from profiles
         const docsWithUserInfo = await Promise.all(
           docsData.map(async (doc: any) => {
             // Get user email from profiles if available

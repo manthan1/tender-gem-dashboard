@@ -15,19 +15,34 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   console.log("ProtectedRoute - Auth state:", { isAuthenticated, userId: user?.id });
   
-  // Special case: Allow access to the admin page without authentication
+  // Special case for admin page - require authentication and admin email
   if (location.pathname === "/admin") {
-    return <>{children}</>;
-  }
-
-  if (!isAuthenticated) {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in as admin to access this page.",
+        variant: "destructive",
+      });
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+    
+    // Check if user has admin email
+    if (user?.email !== "admin@gmail.com") {
+      toast({
+        title: "Admin access required",
+        description: "You don't have permission to access the admin dashboard.",
+        variant: "destructive",
+      });
+      return <Navigate to="/" replace />;
+    }
+  } 
+  // For other routes, just check authentication
+  else if (!isAuthenticated) {
     toast({
       title: "Authentication required",
       description: "Please log in to access this page.",
       variant: "destructive",
     });
-    
-    // Redirect to login but remember where they were trying to go
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -32,7 +31,7 @@ export const AdminBidsTable: React.FC = () => {
       try {
         setLoading(true);
         
-        // First, fetch bids with tender information but without user details
+        // Fetch bids with tender information using the admin access policy
         const { data: bidsData, error: bidsError } = await supabase
           .from("user_bids")
           .select(`
@@ -51,11 +50,10 @@ export const AdminBidsTable: React.FC = () => {
         
         if (bidsError) throw bidsError;
         
-        // Now, for each bid, get the user email from auth.users
-        // We'll use separate queries since we can't directly join with auth.users
+        // Now, for each bid, get the user email from profiles table
         const bidsWithUserInfo = await Promise.all(
           bidsData.map(async (bid: any) => {
-            // Get user email from profiles or auth metadata if available
+            // Get user email from profiles if available
             const { data: userData, error: userError } = await supabase
               .from("profiles")
               .select("username, full_name")
