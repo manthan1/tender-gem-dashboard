@@ -10,19 +10,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
-import { useGemBids, useFilterOptions } from "@/hooks/useGemBids";
+import { useGemBids } from "@/hooks/useGemBids";
 import { useUserBids } from "@/hooks/useUserBids";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { DateRange } from "react-day-picker";
 
 interface Filters {
-  ministry: string;
-  department: string;
-  dateRange: {
-    from: Date | null;
-    to: Date | null;
-  };
-  search: string;
+  ministry?: string;
+  department?: string;
+  dateRange?: DateRange;
+  search?: string;
+  keywords?: string[];
 }
 
 const DashboardPage = () => {
@@ -33,10 +32,6 @@ const DashboardPage = () => {
   const [filters, setFilters] = useState<Filters>({
     ministry: "",
     department: "",
-    dateRange: {
-      from: null,
-      to: null,
-    },
     search: "",
   });
 
@@ -52,10 +47,6 @@ const DashboardPage = () => {
   
   // Get user's bids
   const { bids: userBids, loading: userBidsLoading } = useUserBids();
-  
-  // Get filter options with cached data
-  const { options: ministries } = useFilterOptions("ministry");
-  const { options: departments } = useFilterOptions("department");
 
   // Handle filter changes - memoized for performance
   const handleFilterChange = useCallback((newFilters: Filters) => {
@@ -115,12 +106,7 @@ const DashboardPage = () => {
             </TabsList>
             
             <TabsContent value="tenders">
-              <FilterBar
-                ministries={ministries}
-                departments={departments}
-                onFilterChange={handleFilterChange}
-                currentFilters={filters}
-              />
+              <FilterBar onFilterChange={handleFilterChange} />
 
               <Card>
                 <CardContent className="p-0 overflow-hidden">
