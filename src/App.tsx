@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import DocumentsPage from "./pages/DocumentsPage";
+import CustomerKeywordsPage from "./pages/CustomerKeywordsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,11 @@ const App = () => (
             <Route path="/documents" element={
               <ProtectedRoute>
                 <DocumentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/customers" element={
+              <ProtectedRoute>
+                <CustomerKeywordsPage />
               </ProtectedRoute>
             } />
             

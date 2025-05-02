@@ -24,6 +24,33 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_keywords: {
+        Row: {
+          created_at: string
+          customer_name: string
+          id: string
+          keywords: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          id?: string
+          keywords?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          id?: string
+          keywords?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

@@ -1,223 +1,142 @@
-
-import React, { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Search, X } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { DateRangePicker } from "./DateRangePicker";
+import { useFilterOptions } from "@/hooks/useGemBids";
+import CustomerKeywordFilter from "./CustomerKeywordFilter";
 
 interface FilterBarProps {
-  ministries: string[];
-  departments: string[];
-  onFilterChange: (filters: any) => void;
-  currentFilters: any;
+  onFilterChange: (filters: {
+    ministry?: string;
+    department?: string;
+    dateRange?: DateRange;
+    search?: string;
+    keywords?: string[];
+  }) => void;
 }
 
-const FilterBar: React.FC<FilterBarProps> = ({
-  ministries,
-  departments,
-  onFilterChange,
-  currentFilters,
-}) => {
-  const [search, setSearch] = React.useState(currentFilters.search || "");
-  const [ministry, setMinistry] = React.useState(currentFilters.ministry || "");
-  const [department, setDepartment] = React.useState(currentFilters.department || "");
-  const [dateFrom, setDateFrom] = React.useState<Date | null>(currentFilters.dateRange?.from || null);
-  const [dateTo, setDateTo] = React.useState<Date | null>(currentFilters.dateRange?.to || null);
-  const searchDebounceRef = useRef<number | null>(null);
+const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
+  const [ministry, setMinistry] = useState<string>("");
+  const [department, setDepartment] = useState<string>("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [search, setSearch] = useState<string>("");
+  const [keywords, setKeywords] = useState<string[]>([]);
 
-  // Handle search input with debounce
+  const { options: ministryOptions, loading: ministryLoading } = useFilterOptions("ministry");
+  const { options: departmentOptions, loading: departmentLoading } = useFilterOptions("department");
+
+  // Update filters when any value changes
   useEffect(() => {
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
-    
-    // Only trigger search when user stops typing (300ms debounce)
-    if (search !== currentFilters.search) {
-      searchDebounceRef.current = window.setTimeout(() => {
-        onFilterChange({
-          ...currentFilters,
-          search,
-        });
-        searchDebounceRef.current = null;
-      }, 300);
-    }
-    
-    return () => {
-      if (searchDebounceRef.current) {
-        clearTimeout(searchDebounceRef.current);
-      }
-    };
-  }, [search, currentFilters, onFilterChange]);
+    const filters: {
+      ministry?: string;
+      department?: string;
+      dateRange?: DateRange;
+      search?: string;
+      keywords?: string[];
+    } = {};
 
-  const handleApplyFilters = () => {
-    // Clear any pending search debounce
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = null;
-    }
-    
-    onFilterChange({
-      search,
-      ministry,
-      department,
-      dateRange: {
-        from: dateFrom,
-        to: dateTo,
-      },
-    });
-  };
+    if (ministry) filters.ministry = ministry;
+    if (department) filters.department = department;
+    if (dateRange) filters.dateRange = dateRange;
+    if (search) filters.search = search;
+    if (keywords.length > 0) filters.keywords = keywords;
 
-  const handleResetFilters = () => {
-    setSearch("");
+    onFilterChange(filters);
+  }, [ministry, department, dateRange, search, keywords, onFilterChange]);
+
+  const handleClearFilters = () => {
     setMinistry("");
     setDepartment("");
-    setDateFrom(null);
-    setDateTo(null);
-    
-    // Clear any pending search debounce
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = null;
-    }
-    
-    onFilterChange({
-      search: "",
-      ministry: "",
-      department: "",
-      dateRange: {
-        from: null,
-        to: null,
-      },
-    });
+    setDateRange(undefined);
+    setSearch("");
+    setKeywords([]);
+  };
+
+  const handleKeywordsChange = (newKeywords: string[]) => {
+    setKeywords(newKeywords);
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-        {/* Search input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Search
-          </label>
+    <div className="bg-card rounded-lg p-4 shadow-sm border">
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Bid Number or Category"
+            type="search"
+            placeholder="Search bids..."
+            className="pl-8"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Ministry filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Ministry
-          </label>
-          <Select value={ministry} onValueChange={setMinistry}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Ministries" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Ministries</SelectItem>
-              {ministries.map((item) => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="ministry">Ministry</Label>
+            <select
+              id="ministry"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={ministry}
+              onChange={(e) => setMinistry(e.target.value)}
+              disabled={ministryLoading}
+            >
+              <option value="">All Ministries</option>
+              {ministryOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </select>
+          </div>
 
-        {/* Department filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Department
-          </label>
-          <Select value={department} onValueChange={setDepartment}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Departments" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
-              {departments.map((item) => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <select
+              id="department"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              disabled={departmentLoading}
+            >
+              <option value="">All Departments</option>
+              {departmentOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
               ))}
-            </SelectContent>
-          </Select>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Date Range</Label>
+            <DateRangePicker
+              date={dateRange}
+              onDateChange={setDateRange}
+            />
+          </div>
         </div>
 
-        {/* Date range filters */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            From Date
-          </label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !dateFrom && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFrom ? format(dateFrom, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateFrom}
-                onSelect={setDateFrom}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <CustomerKeywordFilter onKeywordsChange={handleKeywordsChange} />
+          </div>
+          
+          <div className="md:col-span-2 flex justify-end items-end">
+            <Button 
+              variant="outline" 
+              onClick={handleClearFilters}
+              className="flex items-center gap-1"
+            >
+              <X className="h-4 w-4" /> Clear Filters
+            </Button>
+          </div>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            To Date
-          </label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !dateTo && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateTo ? format(dateTo, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateTo}
-                onSelect={setDateTo}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={handleResetFilters}>
-          Reset Filters
-        </Button>
-        <Button onClick={handleApplyFilters}>Apply Filters</Button>
       </div>
     </div>
   );
 };
 
-export default React.memo(FilterBar);
+export default FilterBar;
