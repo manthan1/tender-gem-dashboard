@@ -24,6 +24,7 @@ export type Database = {
         }
         Relationships: []
       }
+<<<<<<< HEAD
       customer_keywords: {
         Row: {
           created_at: string
@@ -74,6 +75,8 @@ export type Database = {
         }
         Relationships: []
       }
+=======
+>>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
       profiles: {
         Row: {
           created_at: string

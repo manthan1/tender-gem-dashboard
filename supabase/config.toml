@@ -1,1 +1,9 @@
+<<<<<<< HEAD
 project_id = "zmwtsbrynlzqnfiqigip"
+=======
+
+project_id = "zmwtsbrynlzqnfiqigip"
+
+[functions.fetch-gem-bids]
+verify_jwt = true
+>>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018

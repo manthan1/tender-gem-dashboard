@@ -1,9 +1,15 @@
+<<<<<<< HEAD
 
 "use client"
 
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { ChevronDown, Check } from "lucide-react"
+=======
+import * as React from "react"
+import * as SelectPrimitive from "@radix-ui/react-select"
+import { Check, ChevronDown, ChevronUp } from "lucide-react"
+>>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
 
 import { cn } from "@/lib/utils"
 
@@ -45,7 +51,11 @@ const SelectScrollUpButton = React.forwardRef<
     )}
     {...props}
   >
+<<<<<<< HEAD
     <ChevronDown className="h-4 w-4 rotate-180" />
+=======
+    <ChevronUp className="h-4 w-4" />
+>>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
   </SelectPrimitive.ScrollUpButton>
 ))
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName

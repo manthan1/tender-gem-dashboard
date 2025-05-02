@@ -1,13 +1,20 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils"
 
+<<<<<<< HEAD
 const TooltipProvider = ({ children, ...props }: TooltipPrimitive.TooltipProviderProps) => {
   return <TooltipPrimitive.Provider {...props}>{children}</TooltipPrimitive.Provider>
 }
 TooltipProvider.displayName = "TooltipProvider"
+=======
+const TooltipProvider = TooltipPrimitive.Provider
+>>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
 
 const Tooltip = TooltipPrimitive.Root
 

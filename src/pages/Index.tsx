@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import GemFetchButton from "@/components/GemFetchButton";
@@ -20,6 +21,12 @@ const Index = () => {
       </div>
     </div>
   );
+=======
+import { Navigate } from "react-router-dom";
+
+const Index = () => {
+  return <Navigate to="/" replace />;
+>>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
 };
 
 export default Index;
