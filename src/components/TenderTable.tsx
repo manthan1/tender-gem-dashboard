@@ -1,4 +1,6 @@
+
 import React, { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -14,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import PlaceBidModal from "./PlaceBidModal";
 import { useUserBids } from "@/hooks/useUserBids";
+import { FileText } from "lucide-react";
 
 interface TenderTableProps {
   bids: GemBid[];
@@ -56,6 +59,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
         <TableHead className="font-medium">End Date</TableHead>
         <TableHead className="font-medium">Download</TableHead>
         <TableHead className="font-medium">Actions</TableHead>
+        <TableHead className="font-medium">Documents</TableHead>
       </TableRow>
     </TableHeader>
   ));
@@ -76,6 +80,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                 <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-20" /></TableCell>
               </TableRow>
@@ -135,6 +140,19 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                       onClick={() => handleBidClick(bid)}
                     >
                       Place Bid
+                    </Button>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {bid.bid_id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      asChild
+                    >
+                      <Link to={`/bid/${bid.bid_id}`} className="flex gap-2 items-center">
+                        <FileText size={14} /> Documents
+                      </Link>
                     </Button>
                   )}
                 </TableCell>
@@ -202,6 +220,19 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                       onClick={() => handleBidClick(bid)}
                     >
                       {userHasBid ? "Edit Bid" : "Place Bid"}
+                    </Button>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {bid.bid_id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      asChild
+                    >
+                      <Link to={`/bid/${bid.bid_id}`} className="flex gap-2 items-center">
+                        <FileText size={14} /> Documents
+                      </Link>
                     </Button>
                   )}
                 </TableCell>

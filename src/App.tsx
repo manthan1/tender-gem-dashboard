@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import DocumentsPage from "./pages/DocumentsPage";
+import BidDocumentViewer from "./components/BidDocumentViewer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LoginPage />} />
+            <Route path="/bid/:bidId" element={<BidDocumentViewer />} />
             
             {/* Protected user routes */}
             <Route path="/dashboard" element={
