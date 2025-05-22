@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface GemBid {
   id: number;
+  bid_id?: number; // Added this property as optional since not all bids might have it
   bid_number: string;
   category: string;
   quantity: number;
