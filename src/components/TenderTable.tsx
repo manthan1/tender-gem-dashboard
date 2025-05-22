@@ -1,6 +1,4 @@
-
 import React, { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -16,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import PlaceBidModal from "./PlaceBidModal";
 import { useUserBids } from "@/hooks/useUserBids";
-import { FileText, ExternalLink } from "lucide-react";
 
 interface TenderTableProps {
   bids: GemBid[];
@@ -31,7 +28,6 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   const [selectedTender, setSelectedTender] = useState<GemBid | null>(null);
   const [existingBid, setExistingBid] = useState<ReturnType<typeof hasBidOnTender>>(null);
   const [bidModalOpen, setBidModalOpen] = useState(false);
-  const navigate = useNavigate();
   
   // Only update display bids when actual bids change and loading is complete
   useEffect(() => {
@@ -46,12 +42,6 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
     setExistingBid(userBid);
     setBidModalOpen(true);
   }, [hasBidOnTender]);
-
-  const handleViewDocuments = useCallback((bidId: number | null) => {
-    if (bidId) {
-      navigate(`/bid/${bidId}/documents`);
-    }
-  }, [navigate]);
   
   // Create a reusable table header to avoid duplicating code
   const TableHeaders = React.memo(() => (
@@ -65,7 +55,6 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
         <TableHead className="font-medium">Start Date</TableHead>
         <TableHead className="font-medium">End Date</TableHead>
         <TableHead className="font-medium">Download</TableHead>
-        <TableHead className="font-medium">Documents</TableHead>
         <TableHead className="font-medium">Actions</TableHead>
       </TableRow>
     </TableHeader>
@@ -87,7 +76,6 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                 <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-20" /></TableCell>
               </TableRow>
@@ -129,27 +117,15 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                   {bid.download_url ? (
                     <a
                       href={bid.download_url}
-                      className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink className="h-4 w-4" />
                       Download
                     </a>
                   ) : (
                     "N/A"
                   )}
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => handleViewDocuments(bid.bid_id)}
-                    className="flex items-center gap-1"
-                  >
-                    <FileText className="h-4 w-4" />
-                    View
-                  </Button>
                 </TableCell>
                 <TableCell>
                   {isAuthenticated && (
@@ -208,27 +184,15 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                   {bid.download_url ? (
                     <a
                       href={bid.download_url}
-                      className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink className="h-4 w-4" />
                       Download
                     </a>
                   ) : (
                     "N/A"
                   )}
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => handleViewDocuments(bid.bid_id)}
-                    className="flex items-center gap-1"
-                  >
-                    <FileText className="h-4 w-4" />
-                    View
-                  </Button>
                 </TableCell>
                 <TableCell>
                   {isAuthenticated && (

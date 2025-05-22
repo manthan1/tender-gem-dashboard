@@ -9,44 +9,4 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  global: {
-    headers: {
-      'apikey': SUPABASE_PUBLISHABLE_KEY
-    }
-  }
-});
-
-// Initialize storage bucket for user documents if it doesn't exist
-export const initializeStorage = async () => {
-  try {
-    // Check if bucket exists
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-    
-    if (listError) {
-      console.error('Error listing buckets:', listError);
-      return;
-    }
-    
-    const bucketExists = buckets?.some(bucket => bucket.name === 'user_documents');
-    
-    if (!bucketExists) {
-      console.log('Creating user_documents bucket');
-      // Create bucket if it doesn't exist
-      const { error } = await supabase.storage.createBucket('user_documents', {
-        public: false,
-        fileSizeLimit: 5242880, // 5MB
-      });
-      
-      if (error) {
-        console.error('Error creating bucket:', error);
-      }
-    }
-  } catch (error) {
-    console.error('Error initializing storage:', error);
-  }
-};
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
