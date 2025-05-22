@@ -1,5 +1,4 @@
 
-<<<<<<< HEAD
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import GemFetchButton from "@/components/GemFetchButton";
@@ -11,9 +10,9 @@ const Index = () => {
         <h1 className="text-4xl font-bold mb-4">Welcome to Admin Data Nexus</h1>
         <p className="text-xl text-gray-600 mb-8">Your central hub for bid and document management</p>
         <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 justify-center">
-          <Link to="/admin">
+          <Link to="/dashboard">
             <Button className="bg-primary hover:bg-primary/90">
-              Go to Admin Dashboard
+              Go to Dashboard
             </Button>
           </Link>
           <GemFetchButton />
@@ -21,12 +20,6 @@ const Index = () => {
       </div>
     </div>
   );
-=======
-import { Navigate } from "react-router-dom";
-
-const Index = () => {
-  return <Navigate to="/" replace />;
->>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
 };
 
 export default Index;

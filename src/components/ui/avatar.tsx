@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 
->>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
