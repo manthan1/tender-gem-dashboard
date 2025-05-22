@@ -15,14 +15,17 @@ import { useUserBids } from "@/hooks/useUserBids";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
+interface DateRange {
+  from: Date | null;
+  to: Date | null;
+}
+
 interface Filters {
   ministry: string;
   department: string;
-  dateRange: {
-    from: Date | null;
-    to: Date | null;
-  };
+  dateRange: DateRange;
   search: string;
+  keywords?: string[];
 }
 
 const DashboardPage = () => {
@@ -38,6 +41,7 @@ const DashboardPage = () => {
       to: null,
     },
     search: "",
+    keywords: [],
   });
 
   // Process filters to handle 'all' value - memoize to prevent unnecessary recalculations

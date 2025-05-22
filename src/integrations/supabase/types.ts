@@ -24,7 +24,6 @@ export type Database = {
         }
         Relationships: []
       }
-<<<<<<< HEAD
       customer_keywords: {
         Row: {
           created_at: string
@@ -44,39 +43,56 @@ export type Database = {
           id?: string
           keyword?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "customer_keywords_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       customers: {
         Row: {
           created_at: string
-          id: string
+          id: string | null
           name: string
-          user_id: string
         }
         Insert: {
           created_at?: string
-          id?: string
+          id?: string | null
           name: string
-          user_id: string
         }
         Update: {
           created_at?: string
-          id?: string
+          id?: string | null
           name?: string
-          user_id?: string
         }
         Relationships: []
       }
-=======
->>>>>>> 42979bccc7aca46816c64ef5401d08fdcd1e8018
+      documents: {
+        Row: {
+          bid_id: number | null
+          created_at: string | null
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          source_tag: string | null
+        }
+        Insert: {
+          bid_id?: number | null
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          source_tag?: string | null
+        }
+        Update: {
+          bid_id?: number | null
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          source_tag?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -98,6 +114,127 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      tender_documents: {
+        Row: {
+          bid_id: number | null
+          created_at: string | null
+          doc_name: string | null
+          doc_url: string | null
+          id: string
+          page_number: number | null
+        }
+        Insert: {
+          bid_id?: number | null
+          created_at?: string | null
+          doc_name?: string | null
+          doc_url?: string | null
+          id?: string
+          page_number?: number | null
+        }
+        Update: {
+          bid_id?: number | null
+          created_at?: string | null
+          doc_name?: string | null
+          doc_url?: string | null
+          id?: string
+          page_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_documents_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "tenders_gem"
+            referencedColumns: ["bid_id"]
+          },
+        ]
+      }
+      tender_interactions: {
+        Row: {
+          bid_placed: boolean | null
+          bid_remaining: boolean | null
+          created_at: string
+          id: string
+          interaction_type: string
+          tender_id: number
+          user_id: string | null
+        }
+        Insert: {
+          bid_placed?: boolean | null
+          bid_remaining?: boolean | null
+          created_at?: string
+          id?: string
+          interaction_type: string
+          tender_id: number
+          user_id?: string | null
+        }
+        Update: {
+          bid_placed?: boolean | null
+          bid_remaining?: boolean | null
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          tender_id?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      tender_type_keywords: {
+        Row: {
+          created_at: string
+          id: string
+          keyword: string
+          tender_type_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          keyword: string
+          tender_type_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          keyword?: string
+          tender_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tender_type_keywords_tender_type_id_fkey"
+            columns: ["tender_type_id"]
+            isOneToOne: false
+            referencedRelation: "tender_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tender_types: {
+        Row: {
+          created_at: string
+          display_name: string
+          icon: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          icon: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          icon?: string
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -146,6 +283,7 @@ export type Database = {
           bid_number: string | null
           bid_url: string | null
           category: string | null
+          city: string | null
           created_at: string | null
           department: string | null
           download_url: string | null
@@ -160,6 +298,7 @@ export type Database = {
           bid_number?: string | null
           bid_url?: string | null
           category?: string | null
+          city?: string | null
           created_at?: string | null
           department?: string | null
           download_url?: string | null
@@ -174,6 +313,7 @@ export type Database = {
           bid_number?: string | null
           bid_url?: string | null
           category?: string | null
+          city?: string | null
           created_at?: string | null
           department?: string | null
           download_url?: string | null
@@ -333,7 +473,25 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tender_bid_status: {
+        Row: {
+          bid_placed_count: number | null
+          bid_remaining_count: number | null
+          has_bid_placed: boolean | null
+          has_bid_remaining: boolean | null
+          tender_id: number | null
+        }
+        Relationships: []
+      }
+      tender_interaction_counts: {
+        Row: {
+          download_count: number | null
+          tender_id: number | null
+          total_count: number | null
+          whatsapp_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_admin: {
