@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import PlaceBidModal from "./PlaceBidModal";
 import { useUserBids } from "@/hooks/useUserBids";
+import { FileText } from "lucide-react";
 
 interface TenderTableProps {
   bids: GemBid[];
@@ -54,7 +56,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
         <TableHead className="font-medium">Department</TableHead>
         <TableHead className="font-medium">Start Date</TableHead>
         <TableHead className="font-medium">End Date</TableHead>
-        <TableHead className="font-medium">Download</TableHead>
+        <TableHead className="font-medium">Documents</TableHead>
         <TableHead className="font-medium">Actions</TableHead>
       </TableRow>
     </TableHeader>
@@ -114,18 +116,12 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                     : "N/A"}
                 </TableCell>
                 <TableCell>
-                  {bid.download_url ? (
-                    <a
-                      href={bid.download_url}
-                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Download
-                    </a>
-                  ) : (
-                    "N/A"
-                  )}
+                  <Link to={`/bid/${bid.id}`} className="text-blue-600 hover:text-blue-800">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1 p-0">
+                      <FileText className="h-4 w-4" />
+                      View
+                    </Button>
+                  </Link>
                 </TableCell>
                 <TableCell>
                   {isAuthenticated && (
@@ -181,18 +177,12 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                     : "N/A"}
                 </TableCell>
                 <TableCell>
-                  {bid.download_url ? (
-                    <a
-                      href={bid.download_url}
-                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Download
-                    </a>
-                  ) : (
-                    "N/A"
-                  )}
+                  <Link to={`/bid/${bid.id}`} className="text-blue-600 hover:text-blue-800">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1 p-0">
+                      <FileText className="h-4 w-4" />
+                      View
+                    </Button>
+                  </Link>
                 </TableCell>
                 <TableCell>
                   {isAuthenticated && (
