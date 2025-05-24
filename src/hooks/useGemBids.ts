@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -161,9 +162,13 @@ export const useGemBids = (
         throw fetchError;
       }
       
+      console.log("Raw data from function:", data);
+      
       // Extract data and count from the function result
       const tendersData = data || [];
-      const count = tendersData.length > 0 ? tendersData[0].total_count : 0;
+      const count = tendersData.length > 0 ? tendersData[0].total_count || 0 : 0;
+      
+      console.log("Extracted count:", count, "Data length:", tendersData.length);
       
       // Transform the data to match our interface
       const transformedData = tendersData.map((tender: any) => ({
@@ -180,7 +185,7 @@ export const useGemBids = (
         bid_url: tender.bid_url
       }));
       
-      console.log("Received data:", transformedData.length, "rows, count:", count);
+      console.log("Final transformed data:", transformedData.length, "rows, total count:", count);
       
       if (isMounted.current) {
         // Cache the results
