@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +24,7 @@ interface Filters {
     to: Date | null;
   };
   search?: string;
+  useKeywordFiltering?: boolean;
 }
 
 // Global cache for storing fetched data to prevent redundant API calls
@@ -34,8 +34,8 @@ const CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes cache expiry
 const OPTIONS_CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes for filter options
 
 // Cache key generator
-const generateCacheKey = (page: number, filters: Filters) => {
-  return `page_${page}_${JSON.stringify(filters)}`;
+const generateCacheKey = (page: number, filters: Filters, userId?: string) => {
+  return `page_${page}_${userId}_${JSON.stringify(filters)}`;
 };
 
 // Track ongoing requests to prevent duplicates
@@ -50,12 +50,12 @@ export const useGemBids = (
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasKeywords, setHasKeywords] = useState<boolean | null>(null);
   const isMounted = useRef(true);
   const debounceTimerRef = useRef<number | null>(null);
   const initialLoadComplete = useRef(false);
   
   const pageSize = 20;
-  const start = (page - 1) * pageSize;
 
   // Clear debounce timer when component unmounts
   useEffect(() => {
@@ -66,9 +66,28 @@ export const useGemBids = (
     };
   }, []);
 
+  // Check if user has keywords
+  const checkUserKeywords = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('get_user_keywords', {
+        p_user_id: user.id
+      });
+      
+      if (error) throw error;
+      
+      const keywords = data || [];
+      setHasKeywords(keywords.length > 0);
+    } catch (err) {
+      console.error('Error checking user keywords:', err);
+      setHasKeywords(false);
+    }
+  }, [user?.id]);
+
   // Stable fetchBids function with deduplication
   const fetchBids = useCallback(async (skipLoading = false) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
       console.log("User not authenticated, skipping data fetch");
       setLoading(false);
       setBids([]);
@@ -77,7 +96,7 @@ export const useGemBids = (
     }
     
     // Generate cache key for this specific query
-    const cacheKey = generateCacheKey(page, filters);
+    const cacheKey = generateCacheKey(page, filters, user.id);
     
     try {
       // Set loading state unless told to skip it (for refetches/background updates)
@@ -110,72 +129,70 @@ export const useGemBids = (
         }
       }
       
-      // Create the query
-      let query = supabase
-        .from("tenders_gem")
-        .select("*", { count: "exact" });
-
-      // Apply filters
-      if (filters.ministry) {
-        query = query.eq("ministry", filters.ministry);
-      }
+      // Prepare parameters for the database function
+      const params = {
+        p_user_id: user.id,
+        p_page: page,
+        p_page_size: pageSize,
+        p_ministry: filters.ministry || null,
+        p_department: filters.department || null,
+        p_search: filters.search || null,
+        p_start_date: filters.dateRange?.from?.toISOString() || null,
+        p_end_date: filters.dateRange?.to?.toISOString() || null,
+        p_use_keywords: filters.useKeywordFiltering !== false // Default to true
+      };
       
-      if (filters.department) {
-        query = query.eq("department", filters.department);
-      }
+      console.log("Fetching data with params:", params);
       
-      if (filters.dateRange?.from) {
-        query = query.gte("start_date", filters.dateRange.from.toISOString());
-      }
-      
-      if (filters.dateRange?.to) {
-        query = query.lte("start_date", filters.dateRange.to.toISOString());
-      }
-      
-      if (filters.search) {
-        query = query.or(
-          `bid_number.ilike.%${filters.search}%,category.ilike.%${filters.search}%`
-        );
-      }
-      
-      // Add range and ordering
-      query = query
-        .range(start, start + pageSize - 1)
-        .order("start_date", { ascending: false });
-        
-      // Store the promise of the executed query in ongoing requests
-      // Convert PromiseLike to full Promise using Promise.resolve
-      const requestPromise = Promise.resolve(query);
+      // Call the database function
+      const requestPromise = Promise.resolve(
+        supabase.rpc('get_filtered_tenders', params)
+      );
       
       ongoingRequests.set(cacheKey, requestPromise);
       
-      console.log("Fetching data from Supabase:", cacheKey);
-      const { data, error: fetchError, count } = await requestPromise;
+      const { data, error: fetchError } = await requestPromise;
       
       // Remove from ongoing requests
       ongoingRequests.delete(cacheKey);
 
       if (fetchError) {
-        console.error("Supabase query error:", fetchError);
+        console.error("Database function error:", fetchError);
         throw fetchError;
       }
       
-      console.log("Received data:", data?.length || 0, "rows, count:", count);
+      // Extract data and count from the function result
+      const tendersData = data || [];
+      const count = tendersData.length > 0 ? tendersData[0].total_count : 0;
+      
+      // Transform the data to match our interface
+      const transformedData = tendersData.map((tender: any) => ({
+        id: tender.id,
+        bid_id: tender.bid_id,
+        bid_number: tender.bid_number,
+        category: tender.category,
+        quantity: tender.quantity,
+        ministry: tender.ministry,
+        department: tender.department,
+        start_date: tender.start_date,
+        end_date: tender.end_date,
+        download_url: tender.download_url,
+        bid_url: tender.bid_url
+      }));
+      
+      console.log("Received data:", transformedData.length, "rows, count:", count);
       
       if (isMounted.current) {
         // Cache the results
-        if (data && count !== null) {
-          dataCache.set(cacheKey, {
-            data,
-            count,
-            timestamp: Date.now()
-          });
-        }
+        dataCache.set(cacheKey, {
+          data: transformedData,
+          count: count,
+          timestamp: Date.now()
+        });
         
-        // Update state only if still mounted
+        setBids(transformedData);
+        setTotalCount(count);
         setLoading(false);
-        setBids(data || []);
-        setTotalCount(count || 0);
         initialLoadComplete.current = true;
         setError(null);
       }
@@ -189,7 +206,7 @@ export const useGemBids = (
         setError(err.message);
       }
     }
-  }, [page, filters, pageSize, start, isAuthenticated, user]);
+  }, [page, filters, pageSize, user?.id, isAuthenticated]);
 
   // Add explicit refetch function that will clear cache
   const refetch = useCallback(() => {
@@ -206,6 +223,13 @@ export const useGemBids = (
     console.log("Refetching all data...");
     return fetchBids(false);
   }, [fetchBids]);
+
+  // Check user keywords on mount and when user changes
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      checkUserKeywords();
+    }
+  }, [isAuthenticated, user?.id, checkUserKeywords]);
 
   // Primary effect for data fetching with proper dependencies
   useEffect(() => {
@@ -261,6 +285,7 @@ export const useGemBids = (
     totalPages: Math.ceil(totalCount / pageSize),
     loading,
     error,
+    hasKeywords,
     refetch, // Expose the refetch function
   };
 };

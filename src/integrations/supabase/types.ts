@@ -494,8 +494,43 @@ export type Database = {
       }
     }
     Functions: {
+      get_filtered_tenders: {
+        Args: {
+          p_user_id: string
+          p_page?: number
+          p_page_size?: number
+          p_ministry?: string
+          p_department?: string
+          p_search?: string
+          p_start_date?: string
+          p_end_date?: string
+          p_use_keywords?: boolean
+        }
+        Returns: {
+          id: number
+          bid_id: number
+          bid_number: string
+          category: string
+          quantity: number
+          ministry: string
+          department: string
+          start_date: string
+          end_date: string
+          download_url: string
+          bid_url: string
+          total_count: number
+        }[]
+      }
+      get_user_keywords: {
+        Args: { p_user_id: string }
+        Returns: string[]
+      }
       is_admin: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      update_user_keywords: {
+        Args: { p_user_id: string; p_keywords: string[] }
         Returns: boolean
       }
     }
