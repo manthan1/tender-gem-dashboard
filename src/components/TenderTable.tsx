@@ -13,7 +13,7 @@ import { GemBid } from "@/hooks/useGemBids";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import PlaceBidModal from "./PlaceBidModal";
 import { useUserBids } from "@/hooks/useUserBids";
@@ -117,16 +117,14 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <span className="text-sm">{truncateText(bid.category, 40)}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">{bid.category}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <span className="text-sm">{truncateText(bid.category, 40)}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">{bid.category}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="text-xs">
@@ -136,43 +134,37 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Building className="h-3 w-3 text-gray-400" />
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <span className="text-sm">{truncateText(bid.ministry, 25)}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{bid.ministry}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <span className="text-sm">{truncateText(bid.ministry, 25)}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{bid.ministry}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <span className="text-sm">{truncateText(bid.department, 25)}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{bid.department}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <span className="text-sm">{truncateText(bid.department, 25)}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{bid.department}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <MapPin className="h-3 w-3 text-gray-400" />
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <span className="text-sm font-medium">{truncateText(bid.city, 15)}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{bid.city}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <span className="text-sm font-medium">{truncateText(bid.city, 15)}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{bid.city}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </TableCell>
                 <TableCell>
