@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import DashboardHeader from "@/components/DashboardHeader";
@@ -42,7 +41,7 @@ const DashboardPage = () => {
   const [filters, setFilters] = useState<Filters>({
     ministry: "",
     department: "",
-    city: "", // Added city to initial state
+    city: "",
     dateRange: {
       from: null,
       to: null,

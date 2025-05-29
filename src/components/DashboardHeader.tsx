@@ -1,10 +1,7 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { User } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -14,45 +11,10 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
-interface DashboardHeaderProps {
-  onRefresh?: () => Promise<void>;
-}
-
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onRefresh }) => {
+const DashboardHeader: React.FC = () => {
   const { logout, user } = useAuth();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-
-  const handleFetchNewBids = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('fetch-gem-bids');
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      if (onRefresh) {
-        await onRefresh();
-      }
-      
-      toast({
-        title: "Data fetching completed",
-        description: data?.message || "Bid data has been updated",
-        variant: "default",
-      });
-    } catch (error) {
-      console.error("Error fetching bids:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch new bids",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const userInitials = user?.email 
     ? user.email.substring(0, 2).toUpperCase() 
@@ -71,15 +33,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onRefresh }) => {
         </div>
         
         <div className="flex gap-3 items-center">
-          <Button 
-            onClick={handleFetchNewBids} 
-            disabled={loading}
-            className="gradient-orange-hover text-white font-medium px-6 py-2 rounded-full border-0 focus-brand"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? "Fetching..." : "Fetch New Bids"}
-          </Button>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 focus-brand">
