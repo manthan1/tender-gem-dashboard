@@ -133,39 +133,40 @@ const DashboardPage = () => {
   }, [error, toast]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-brand-light-gray">
       <DashboardHeader onRefresh={handleRefresh} />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 sm:px-0 mb-6 flex justify-between items-center">
+      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+        {/* Page Title Row */}
+        <div className="px-4 sm:px-0 mb-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-gray-900">Tender Portal</h1>
-            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-700">
+            <h1 className="text-3xl font-bold brand-navy font-inter">Tender Portal</h1>
+            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-200">
+              <TrendingUp className="h-4 w-4 brand-orange" />
+              <span className="text-sm font-semibold brand-orange font-inter">
                 {totalCount.toLocaleString()} Active Tenders
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {isAuthenticated && (
               <Dialog open={keywordsDialogOpen} onOpenChange={setKeywordsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="flex gap-2">
-                    <Settings className="h-4 w-4" />
-                    Keywords
+                  <Button variant="ghost" className="border border-navy-500 text-navy-500 hover:bg-navy-50 focus-brand">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage Keywords
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md rounded-3xl shadow-2xl">
                   <DialogHeader>
-                    <DialogTitle>Manage Keywords</DialogTitle>
+                    <DialogTitle className="font-semibold brand-navy">Manage Keywords</DialogTitle>
                   </DialogHeader>
                   <KeywordsManager onKeywordsUpdate={handleKeywordsUpdate} />
                 </DialogContent>
               </Dialog>
             )}
             <Link to="/documents">
-              <Button variant="outline" className="flex gap-2">
-                <FileText className="h-4 w-4" />
+              <Button variant="outline" className="border-gray-300 hover:bg-gray-50 focus-brand">
+                <FileText className="h-4 w-4 mr-2" />
                 My Documents
               </Button>
             </Link>
@@ -173,67 +174,78 @@ const DashboardPage = () => {
         </div>
         
         <div className="px-4 sm:px-0">
+          {/* Segmented Pill Tabs */}
           <Tabs defaultValue="tenders" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 bg-white shadow-sm">
-              <TabsTrigger value="tenders" className="flex items-center gap-2">
+            <TabsList className="mb-8 bg-gray-100 p-1 rounded-full h-12">
+              <TabsTrigger 
+                value="tenders" 
+                className="flex items-center gap-2 rounded-full px-6 py-2 data-[state=active]:bg-white data-[state=active]:text-navy-500 data-[state=active]:shadow-sm transition-all duration-200"
+              >
                 <FileText className="h-4 w-4" />
                 All Tenders
               </TabsTrigger>
               {isAuthenticated && (
-                <TabsTrigger value="my-bids" className="flex items-center gap-2">
+                <TabsTrigger 
+                  value="my-bids" 
+                  className="flex items-center gap-2 rounded-full px-6 py-2 data-[state=active]:bg-white data-[state=active]:text-navy-500 data-[state=active]:shadow-sm transition-all duration-200"
+                >
                   <TrendingUp className="h-4 w-4" />
                   My Bids
                 </TabsTrigger>
               )}
             </TabsList>
             
-            <TabsContent value="tenders">
-              <div className="space-y-6">
-                {isAuthenticated && (
-                  <Card className="shadow-sm">
-                    <CardContent className="pt-6">
-                      <KeywordFilterToggle
-                        enabled={filters.useKeywordFiltering}
-                        onChange={handleKeywordFilterChange}
-                        hasKeywords={hasKeywords}
-                        keywordCount={userKeywords.length}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-
-                <AdvancedFilterBar
-                  ministries={ministries}
-                  departments={departments}
-                  cities={cities} // Pass cities to the filter bar
-                  onFilterChange={handleFilterChange}
-                  currentFilters={filters}
-                  totalResults={totalCount}
-                />
-
-                <Card className="shadow-sm">
-                  <CardContent className="p-0 overflow-hidden">
-                    <TenderTable bids={bids} loading={loading} />
+            <TabsContent value="tenders" className="space-y-6">
+              {/* Keyword Filter Toggle */}
+              {isAuthenticated && (
+                <Card className="table-shadow border-0 rounded-2xl bg-white">
+                  <CardContent className="pt-6">
+                    <KeywordFilterToggle
+                      enabled={filters.useKeywordFiltering}
+                      onChange={handleKeywordFilterChange}
+                      hasKeywords={hasKeywords}
+                      keywordCount={userKeywords.length}
+                    />
                   </CardContent>
                 </Card>
+              )}
 
-                {!loading && totalPages > 1 && (
-                  <TablePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                  />
-                )}
-              </div>
+              {/* Filters */}
+              <AdvancedFilterBar
+                ministries={ministries}
+                departments={departments}
+                cities={cities}
+                onFilterChange={handleFilterChange}
+                currentFilters={filters}
+                totalResults={totalCount}
+              />
+
+              {/* Table */}
+              <Card className="table-shadow border-0 rounded-2xl bg-white overflow-hidden">
+                <CardContent className="p-0">
+                  <TenderTable bids={bids} loading={loading} />
+                </CardContent>
+              </Card>
+
+              {/* Pagination */}
+              {!loading && totalPages > 1 && (
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
             </TabsContent>
             
             <TabsContent value="my-bids">
               {isAuthenticated ? (
-                <UserBidsTable bids={userBids} loading={userBidsLoading} />
+                <Card className="table-shadow border-0 rounded-2xl bg-white">
+                  <UserBidsTable bids={userBids} loading={userBidsLoading} />
+                </Card>
               ) : (
-                <Card>
+                <Card className="table-shadow border-0 rounded-2xl bg-white">
                   <CardContent className="flex justify-center items-center h-32">
-                    <p className="text-gray-500">Please log in to view your bids.</p>
+                    <p className="text-brand-gray-500">Please log in to view your bids.</p>
                   </CardContent>
                 </Card>
               )}

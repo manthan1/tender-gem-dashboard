@@ -53,65 +53,65 @@ const KeywordsManager: React.FC<KeywordsManagerProps> = ({ onKeywordsUpdate }) =
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Keyword Filters</CardTitle>
-        <CardDescription>
+    <div className="space-y-6">
+      <div>
+        <CardDescription className="text-brand-gray-500 mb-4">
           Add keywords to automatically filter tenders based on category and bid number. 
           Only tenders matching your keywords will be shown.
         </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="keyword-input">Add Keyword</Label>
-          <div className="flex gap-2">
-            <Input
-              id="keyword-input"
-              placeholder="Enter a keyword (e.g., 'software', 'construction')"
-              value={newKeyword}
-              onChange={(e) => setNewKeyword(e.target.value)}
-              onKeyPress={handleKeyPress}
-            />
-            <Button 
-              onClick={handleAddKeyword} 
-              size="sm"
-              disabled={!newKeyword.trim() || keywords.includes(newKeyword.trim())}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+      </div>
+      
+      <div className="space-y-3">
+        <Label htmlFor="keyword-input" className="text-sm font-medium brand-navy">Add Keyword</Label>
+        <div className="flex gap-2">
+          <Input
+            id="keyword-input"
+            placeholder="Enter a keyword (e.g., 'software', 'construction')"
+            value={newKeyword}
+            onChange={(e) => setNewKeyword(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="h-11 rounded-xl border-gray-300 focus:border-orange-500 focus:ring-orange-500 shadow-inner"
+          />
+          <Button 
+            onClick={handleAddKeyword} 
+            size="icon"
+            disabled={!newKeyword.trim() || keywords.includes(newKeyword.trim())}
+            className="h-10 w-10 bg-orange-500 hover:bg-orange-600 rounded-xl focus-brand"
+          >
+            <Plus className="h-4 w-4 text-white" />
+          </Button>
+        </div>
+      </div>
+
+      {keywords.length > 0 && (
+        <div className="space-y-3">
+          <Label className="text-sm font-medium brand-navy">Your Keywords</Label>
+          <div className="flex flex-wrap gap-2">
+            {keywords.map((keyword) => (
+              <Badge key={keyword} variant="secondary" className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-lg">
+                {keyword}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-0 hover:bg-transparent"
+                  onClick={() => handleRemoveKeyword(keyword)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
           </div>
         </div>
+      )}
 
-        {keywords.length > 0 && (
-          <div className="space-y-2">
-            <Label>Your Keywords</Label>
-            <div className="flex flex-wrap gap-2">
-              {keywords.map((keyword) => (
-                <Badge key={keyword} variant="secondary" className="flex items-center gap-1">
-                  {keyword}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0 hover:bg-transparent"
-                    onClick={() => handleRemoveKeyword(keyword)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <Button 
-          onClick={handleSaveKeywords} 
-          disabled={loading}
-          className="w-full"
-        >
-          {loading ? "Saving..." : "Save Keywords"}
-        </Button>
-      </CardContent>
-    </Card>
+      <Button 
+        onClick={handleSaveKeywords} 
+        disabled={loading}
+        className="w-full bg-navy-500 hover:bg-navy-600 text-white py-3 rounded-xl font-medium transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md focus-brand"
+      >
+        {loading ? "Saving..." : "Save Keywords"}
+      </Button>
+    </div>
   );
 };
 

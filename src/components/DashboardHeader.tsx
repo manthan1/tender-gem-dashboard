@@ -27,14 +27,12 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onRefresh }) => {
   const handleFetchNewBids = async () => {
     setLoading(true);
     try {
-      // First call the edge function to fetch new bids
       const { data, error } = await supabase.functions.invoke('fetch-gem-bids');
       
       if (error) {
         throw new Error(error.message);
       }
       
-      // Then refresh the UI data if we have an onRefresh handler
       if (onRefresh) {
         await onRefresh();
       }
@@ -61,37 +59,46 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onRefresh }) => {
     : "U";
 
   return (
-    <header className="bg-white shadow">
+    <header className="glass-blur border-b border-white/20 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">GeM Tenders Dashboard</h1>
-        <div className="flex gap-2 items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-navy-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">TT</span>
+          </div>
+          <h1 className="text-2xl font-semibold brand-navy font-inter">
+            TenderTimes GeM Dashboard
+          </h1>
+        </div>
+        
+        <div className="flex gap-3 items-center">
           <Button 
-            variant="outline" 
             onClick={handleFetchNewBids} 
             disabled={loading}
-            className="flex gap-2 items-center"
+            className="gradient-orange-hover text-white font-medium px-6 py-2 rounded-full border-0 focus-brand"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             {loading ? "Fetching..." : "Fetch New Bids"}
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar>
-                  <AvatarFallback>{userInitials}</AvatarFallback>
+              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 focus-brand">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-navy-500 text-white text-xs font-semibold">
+                    {userInitials}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 shadow-lg rounded-xl">
+              <DropdownMenuLabel className="font-semibold text-navy-500">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem disabled className="text-gray-500">
                 <User className="mr-2 h-4 w-4" />
                 {user?.email}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => logout()}>
+              <DropdownMenuItem onClick={() => logout()} className="text-red-600 focus:bg-red-50">
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

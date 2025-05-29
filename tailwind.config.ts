@@ -19,6 +19,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				inter: ['Inter', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -62,6 +65,43 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Brand colors
+				navy: {
+					DEFAULT: '#1A3761',
+					50: '#E8F0FF',
+					100: '#D1E0FF',
+					500: '#1A3761',
+					600: '#164155',
+					700: '#122B49',
+					800: '#0E153D',
+					900: '#0A0F31'
+				},
+				orange: {
+					DEFAULT: '#F7A21C',
+					50: '#FFF7E6',
+					100: '#FFEFCC',
+					200: '#FFE099',
+					300: '#FFD066',
+					400: '#FFC033',
+					500: '#F7A21C',
+					600: '#E09015',
+					700: '#C97E0E',
+					800: '#B26C07',
+					900: '#9B5A00'
+				},
+				golden: {
+					DEFAULT: '#BD8020',
+					50: '#F5F0E6',
+					100: '#EBE1CC',
+					200: '#D7C399',
+					300: '#C3A566',
+					400: '#AF8733',
+					500: '#BD8020',
+					600: '#A9721C',
+					700: '#956418',
+					800: '#815614',
+					900: '#6D4810'
 				}
 			},
 			borderRadius: {
