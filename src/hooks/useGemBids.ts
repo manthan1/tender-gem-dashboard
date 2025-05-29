@@ -5,12 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface GemBid {
   id: number;
-  bid_id?: number; // Added this property as optional since not all bids might have it
+  bid_id?: number;
   bid_number: string;
   category: string;
   quantity: number;
   ministry: string;
   department: string;
+  city: string; // Now required field
   start_date: string;
   end_date: string;
   download_url?: string;
@@ -20,6 +21,7 @@ export interface GemBid {
 interface Filters {
   ministry?: string;
   department?: string;
+  city?: string; // Added city filter
   dateRange?: {
     from: Date | null;
     to: Date | null;
@@ -137,6 +139,7 @@ export const useGemBids = (
         p_page_size: pageSize,
         p_ministry: filters.ministry || null,
         p_department: filters.department || null,
+        p_city: filters.city || null, // Added city parameter
         p_search: filters.search || null,
         p_start_date: filters.dateRange?.from?.toISOString() || null,
         p_end_date: filters.dateRange?.to?.toISOString() || null,
@@ -179,6 +182,7 @@ export const useGemBids = (
         quantity: tender.quantity,
         ministry: tender.ministry,
         department: tender.department,
+        city: tender.city || "N/A", // Ensure city is always a string
         start_date: tender.start_date,
         end_date: tender.end_date,
         download_url: tender.download_url,
@@ -295,8 +299,8 @@ export const useGemBids = (
   };
 };
 
-// Optimized hook to fetch filter options
-export const useFilterOptions = (field: "ministry" | "department") => {
+// Optimized hook to fetch filter options - now supports city
+export const useFilterOptions = (field: "ministry" | "department" | "city") => {
   const { isAuthenticated } = useAuth();
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);

@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import DashboardHeader from "@/components/DashboardHeader";
-import FilterBar from "@/components/FilterBar";
+import AdvancedFilterBar from "@/components/AdvancedFilterBar";
 import TenderTable from "@/components/TenderTable";
 import TablePagination from "@/components/TablePagination";
 import UserBidsTable from "@/components/UserBidsTable";
@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { FileText, Settings } from "lucide-react";
+import { FileText, Settings, TrendingUp } from "lucide-react";
 import { useGemBids, useFilterOptions } from "@/hooks/useGemBids";
 import { useUserBids } from "@/hooks/useUserBids";
 import { useUserKeywords } from "@/hooks/useUserKeywords";
@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface Filters {
   ministry: string;
   department: string;
+  city: string; // Added city filter
   dateRange: {
     from: Date | null;
     to: Date | null;
@@ -41,6 +42,7 @@ const DashboardPage = () => {
   const [filters, setFilters] = useState<Filters>({
     ministry: "",
     department: "",
+    city: "", // Added city to initial state
     dateRange: {
       from: null,
       to: null,
@@ -54,17 +56,19 @@ const DashboardPage = () => {
     ...filters,
     ministry: filters.ministry === "all" ? "" : filters.ministry,
     department: filters.department === "all" ? "" : filters.department,
+    city: filters.city === "all" ? "" : filters.city, // Added city processing
   }), [filters]);
 
   // Initialize data fetching
-  const { bids, totalPages, loading, error, hasKeywords, refetch } = useGemBids(currentPage, processedFilters);
+  const { bids, totalPages, totalCount, loading, error, hasKeywords, refetch } = useGemBids(currentPage, processedFilters);
   
   // Get user's bids
   const { bids: userBids, loading: userBidsLoading } = useUserBids();
   
-  // Get filter options
+  // Get filter options - now includes cities
   const { options: ministries } = useFilterOptions("ministry");
   const { options: departments } = useFilterOptions("department");
+  const { options: cities } = useFilterOptions("city");
 
   // Load user keywords
   const loadUserKeywords = useCallback(async () => {
@@ -78,7 +82,7 @@ const DashboardPage = () => {
     }
   }, [isAuthenticated, user, loadUserKeywords]);
 
-  // Handle filter changes
+  // Handle filter changes - now includes city
   const handleFilterChange = useCallback((newFilters: Omit<Filters, 'useKeywordFiltering'>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setCurrentPage(1);
@@ -133,7 +137,15 @@ const DashboardPage = () => {
       <DashboardHeader onRefresh={handleRefresh} />
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0 mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">Tender Portal</h1>
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full">
+              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-700">
+                {totalCount.toLocaleString()} Active Tenders
+              </span>
+            </div>
+          </div>
           <div className="flex gap-2">
             {isAuthenticated && (
               <Dialog open={keywordsDialogOpen} onOpenChange={setKeywordsDialogOpen}>
@@ -162,15 +174,23 @@ const DashboardPage = () => {
         
         <div className="px-4 sm:px-0">
           <Tabs defaultValue="tenders" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="tenders">All Tenders</TabsTrigger>
-              {isAuthenticated && <TabsTrigger value="my-bids">My Bids</TabsTrigger>}
+            <TabsList className="mb-6 bg-white shadow-sm">
+              <TabsTrigger value="tenders" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                All Tenders
+              </TabsTrigger>
+              {isAuthenticated && (
+                <TabsTrigger value="my-bids" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  My Bids
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="tenders">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {isAuthenticated && (
-                  <Card>
+                  <Card className="shadow-sm">
                     <CardContent className="pt-6">
                       <KeywordFilterToggle
                         enabled={filters.useKeywordFiltering}
@@ -182,14 +202,16 @@ const DashboardPage = () => {
                   </Card>
                 )}
 
-                <FilterBar
+                <AdvancedFilterBar
                   ministries={ministries}
                   departments={departments}
+                  cities={cities} // Pass cities to the filter bar
                   onFilterChange={handleFilterChange}
                   currentFilters={filters}
+                  totalResults={totalCount}
                 />
 
-                <Card>
+                <Card className="shadow-sm">
                   <CardContent className="p-0 overflow-hidden">
                     <TenderTable bids={bids} loading={loading} />
                   </CardContent>

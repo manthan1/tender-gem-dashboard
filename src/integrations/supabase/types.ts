@@ -498,17 +498,30 @@ export type Database = {
     }
     Functions: {
       get_filtered_tenders: {
-        Args: {
-          p_user_id: string
-          p_page?: number
-          p_page_size?: number
-          p_ministry?: string
-          p_department?: string
-          p_search?: string
-          p_start_date?: string
-          p_end_date?: string
-          p_use_keywords?: boolean
-        }
+        Args:
+          | {
+              p_user_id: string
+              p_page?: number
+              p_page_size?: number
+              p_ministry?: string
+              p_department?: string
+              p_city?: string
+              p_search?: string
+              p_start_date?: string
+              p_end_date?: string
+              p_use_keywords?: boolean
+            }
+          | {
+              p_user_id: string
+              p_page?: number
+              p_page_size?: number
+              p_ministry?: string
+              p_department?: string
+              p_search?: string
+              p_start_date?: string
+              p_end_date?: string
+              p_use_keywords?: boolean
+            }
         Returns: {
           id: number
           bid_id: number
