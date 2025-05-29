@@ -47,7 +47,8 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
     setBidModalOpen(true);
   }, [hasBidOnTender]);
 
-  const truncateText = (text: string, maxLength: number = 30) => {
+  const truncateText = (text: string | null | undefined, maxLength: number = 30) => {
+    if (!text || typeof text !== 'string') return "N/A";
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
   };
@@ -262,7 +263,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                 <TableRow key={bid.id} className="hover:bg-gray-50 transition-colors">
                   <TableCell className="font-medium">
                     <Badge variant="outline" className="font-mono text-xs">
-                      {bid.bid_number}
+                      {bid.bid_number || "N/A"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -271,13 +272,13 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                         <span className="text-sm">{truncateText(bid.category, 40)}</span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="max-w-xs">{bid.category}</p>
+                        <p className="max-w-xs">{bid.category || "N/A"}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="text-xs">
-                      {bid.quantity}
+                      {bid.quantity || "N/A"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -288,7 +289,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                           <span className="text-sm">{truncateText(bid.ministry, 25)}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{bid.ministry}</p>
+                          <p>{bid.ministry || "N/A"}</p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -299,7 +300,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                         <span className="text-sm">{truncateText(bid.department, 25)}</span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{bid.department}</p>
+                        <p>{bid.department || "N/A"}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TableCell>
@@ -311,7 +312,7 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
                           <span className="text-sm font-medium text-blue-600">{truncateText(bid.city, 15)}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{bid.city}</p>
+                          <p>{bid.city || "N/A"}</p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
