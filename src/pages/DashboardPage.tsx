@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface Filters {
   ministry: string;
   department: string;
-  city: string; // Added city filter
+  city: string;
   dateRange: {
     from: Date | null;
     to: Date | null;
@@ -81,7 +81,7 @@ const DashboardPage = () => {
     }
   }, [isAuthenticated, user, loadUserKeywords]);
 
-  // Handle filter changes - now includes city
+  // Handle filter changes
   const handleFilterChange = useCallback((newFilters: Omit<Filters, 'useKeywordFiltering'>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setCurrentPage(1);
@@ -97,13 +97,6 @@ const DashboardPage = () => {
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
-
-  // Handle refresh
-  const handleRefresh = useCallback(async () => {
-    console.log("Refreshing dashboard data...");
-    await refetch();
-    await loadUserKeywords();
-  }, [refetch, loadUserKeywords]);
 
   // Handle keywords update
   const handleKeywordsUpdate = useCallback(() => {
@@ -133,7 +126,7 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-brand-light-gray">
-      <DashboardHeader onRefresh={handleRefresh} />
+      <DashboardHeader />
       <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
         {/* Page Title Row */}
         <div className="px-4 sm:px-0 mb-8 flex justify-between items-center">
