@@ -29,10 +29,10 @@ const KeywordFilterToggle: React.FC<KeywordFilterToggleProps> = ({
             disabled={!hasKeywords}
             className="data-[state=checked]:bg-orange-500 focus-brand"
           />
-          <Label htmlFor="keyword-filter" className="text-sm font-medium brand-navy">
-            Filter by Keywords
+          <Label htmlFor="keyword-filter" className="text-sm font-medium brand-navy cursor-pointer">
+            <span className="block sm:inline">Filter by Keywords</span>
             {hasKeywords && keywordCount > 0 && (
-              <span className="text-brand-gray-500 ml-2 font-normal">
+              <span className="text-brand-gray-500 ml-0 sm:ml-2 font-normal block sm:inline">
                 ({keywordCount} keywords)
               </span>
             )}
@@ -42,7 +42,7 @@ const KeywordFilterToggle: React.FC<KeywordFilterToggleProps> = ({
 
       {hasKeywords === false && (
         <Alert className="border-orange-200 bg-orange-50">
-          <Info className="h-4 w-4 text-orange-600" />
+          <Info className="h-4 w-4 text-orange-600 flex-shrink-0" />
           <AlertDescription className="text-orange-800">
             No keywords set. Add keywords to enable automatic filtering of tenders.
           </AlertDescription>
@@ -51,7 +51,7 @@ const KeywordFilterToggle: React.FC<KeywordFilterToggleProps> = ({
 
       {enabled && hasKeywords && (
         <Alert className="border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
+          <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
           <AlertDescription className="text-blue-800">
             Showing only tenders that match your saved keywords.
           </AlertDescription>

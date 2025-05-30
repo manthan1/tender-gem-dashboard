@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -50,6 +51,103 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
   };
+
+  // Mobile Card Component
+  const MobileCard: React.FC<{ bid: GemBid }> = ({ bid }) => {
+    const userHasBid = hasBidOnTender(bid.id);
+    
+    return (
+      <div className="p-4 border-b border-gray-100 last:border-b-0 min-h-[80px] touch-manipulation">
+        <div className="space-y-3">
+          {/* Header Row */}
+          <div className="flex justify-between items-start">
+            <div className="flex-1 min-w-0">
+              <button className="text-navy-500 hover:text-navy-700 font-mono text-xs underline-offset-2 hover:underline transition-colors focus-brand text-left">
+                {bid.bid_number || "N/A"}
+              </button>
+              <p className="text-sm text-gray-800 mt-1 line-clamp-2">
+                {bid.category || "N/A"}
+              </p>
+            </div>
+            <div className="ml-3 flex flex-col items-end gap-2">
+              <div className="bg-blue-50 text-navy-600 text-xs font-semibold px-2 py-1 rounded-md">
+                {bid.quantity || "N/A"}
+              </div>
+            </div>
+          </div>
+
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center gap-1">
+              <Building className="h-3 w-3 text-gray-400 flex-shrink-0" />
+              <span className="text-gray-800 truncate">{truncateText(bid.ministry, 20)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <MapPin className="h-3 w-3 text-gray-400 flex-shrink-0" />
+              <span className="text-navy-600 font-medium truncate">{truncateText(bid.city, 15)}</span>
+            </div>
+          </div>
+
+          {/* Dates Row */}
+          <div className="flex justify-between items-center text-xs text-gray-600">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>Start: {bid.start_date ? format(new Date(bid.start_date), "dd MMM") : "N/A"}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <span>End: {bid.end_date ? format(new Date(bid.end_date), "dd MMM") : "N/A"}</span>
+            </div>
+          </div>
+
+          {/* Actions Row */}
+          <div className="flex gap-2 pt-2">
+            {bid.download_url && (
+              <Button size="sm" variant="ghost" asChild className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 h-8 min-h-[44px] flex-1">
+                <a
+                  href={bid.download_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1"
+                >
+                  <Download className="h-3 w-3" />
+                  <span className="text-xs">PDF</span>
+                </a>
+              </Button>
+            )}
+            
+            {isAuthenticated && (
+              <Button 
+                size="sm" 
+                onClick={() => handleBidClick(bid)}
+                className={`text-xs px-3 py-1 rounded-md transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md focus-brand flex-1 min-h-[44px] ${
+                  userHasBid 
+                    ? "bg-navy-500 hover:bg-navy-600 text-white" 
+                    : "bg-orange-500 hover:bg-orange-600 text-white"
+                }`}
+              >
+                {userHasBid ? "Edit Bid" : "Place Bid"}
+              </Button>
+            )}
+
+            {bid.bid_id && (
+              <Button
+                size="sm"
+                variant="ghost"
+                asChild
+                className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 h-8 min-h-[44px] flex-1"
+              >
+                <Link to={`/bid/${bid.bid_id}`} className="flex gap-1 items-center justify-center">
+                  <FileText className="h-3 w-3" />
+                  <span className="text-xs">Docs</span>
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   const TableHeaders = React.memo(() => (
     <TableHeader>
@@ -72,168 +170,52 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
   if (loading && displayBids.length === 0) {
     return (
       <div className="rounded-2xl border-0 overflow-hidden bg-white">
-        <Table>
-          <TableHeaders />
-          <TableBody>
-            {Array(5).fill(0).map((_, index) => (
-              <TableRow key={index} className="border-b border-gray-100">
-                <TableCell><Skeleton className="h-5 w-32 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-40 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-16 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-32 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-40 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-24 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-24 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-24 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-20 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-20 rounded-lg" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-20 rounded-lg" /></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  }
-
-  if (loading && displayBids.length > 0) {
-    return (
-      <div className="rounded-2xl border-0 overflow-hidden bg-white relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 overflow-hidden z-10">
-          <div className="h-full bg-orange-500 animate-pulse" style={{ width: '30%' }}></div>
+        {/* Mobile Loading */}
+        <div className="sm:hidden">
+          {Array(5).fill(0).map((_, index) => (
+            <div key={index} className="p-4 border-b border-gray-100 space-y-3">
+              <div className="flex justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24 rounded" />
+                  <Skeleton className="h-4 w-48 rounded" />
+                </div>
+                <Skeleton className="h-6 w-12 rounded" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Skeleton className="h-4 w-32 rounded" />
+                <Skeleton className="h-4 w-20 rounded" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-8 flex-1 rounded" />
+                <Skeleton className="h-8 flex-1 rounded" />
+              </div>
+            </div>
+          ))}
         </div>
-        <Table>
-          <TableHeaders />
-          <TableBody>
-            {displayBids.map((bid) => (
-              <TableRow key={bid.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
-                <TableCell className="font-medium">
-                  <button className="text-navy-500 hover:text-navy-700 font-mono text-xs underline-offset-2 hover:underline transition-colors focus-brand">
-                    {bid.bid_number}
-                  </button>
-                </TableCell>
-                <TableCell>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="text-sm text-gray-800">{truncateText(bid.category, 40)}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">{bid.category}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <div className="bg-blue-50 text-navy-600 text-xs font-semibold px-2 py-1 rounded-md w-fit">
-                    {bid.quantity}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Building className="h-3 w-3 text-gray-400" />
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <span className="text-sm text-gray-800">{truncateText(bid.ministry, 25)}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{bid.ministry}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="text-sm text-gray-800">{truncateText(bid.department, 25)}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{bid.department}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-gray-400" />
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <span className="text-sm font-medium text-navy-600">{truncateText(bid.city, 15)}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{bid.city}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-xs text-gray-600">
-                        {bid.start_date 
-                          ? format(new Date(bid.start_date), "dd MMM")
-                          : "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-xs text-gray-600">
-                        {bid.end_date 
-                          ? format(new Date(bid.end_date), "dd MMM")
-                          : "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {bid.download_url ? (
-                    <Button size="sm" variant="ghost" asChild className="text-gray-600 hover:text-gray-800 hover:bg-gray-100">
-                      <a
-                        href={bid.download_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1"
-                      >
-                        <Download className="h-3 w-3" />
-                        <span className="text-xs">PDF</span>
-                      </a>
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-gray-400">N/A</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {isAuthenticated && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleBidClick(bid)}
-                      className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1 rounded-md transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md focus-brand"
-                    >
-                      Place Bid
-                    </Button>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {bid.bid_id && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      asChild
-                      className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                    >
-                      <Link to={`/bid/${bid.bid_id}`} className="flex gap-1 items-center">
-                        <FileText className="h-3 w-3" />
-                        <span className="text-xs">Docs</span>
-                      </Link>
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+
+        {/* Desktop Loading */}
+        <div className="hidden sm:block">
+          <Table>
+            <TableHeaders />
+            <TableBody>
+              {Array(5).fill(0).map((_, index) => (
+                <TableRow key={index} className="border-b border-gray-100">
+                  <TableCell><Skeleton className="h-5 w-32 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-40 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-16 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-32 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-40 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20 rounded-lg" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20 rounded-lg" /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     );
   }
@@ -250,145 +232,161 @@ const TenderTable: React.FC<TenderTableProps> = ({ bids, loading }) => {
 
   return (
     <div className="rounded-2xl border-0 overflow-hidden bg-white">
-      <Table>
-        <TableHeaders />
-        <TableBody>
-          {displayBids.map((bid) => {
-            const userHasBid = hasBidOnTender(bid.id);
-            return (
-              <TableRow key={bid.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
-                <TableCell className="font-medium">
-                  <button className="text-navy-500 hover:text-navy-700 font-mono text-xs underline-offset-2 hover:underline transition-colors focus-brand">
-                    {bid.bid_number || "N/A"}
-                  </button>
-                </TableCell>
-                <TableCell>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="text-sm text-gray-800">{truncateText(bid.category, 40)}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">{bid.category || "N/A"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <div className="bg-blue-50 text-navy-600 text-xs font-semibold px-2 py-1 rounded-md w-fit">
-                    {bid.quantity || "N/A"}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Building className="h-3 w-3 text-gray-400" />
+      {loading && (
+        <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 overflow-hidden z-10">
+          <div className="h-full bg-orange-500 animate-pulse" style={{ width: '30%' }}></div>
+        </div>
+      )}
+
+      {/* Mobile Cards (≤640px) */}
+      <div className="sm:hidden">
+        {displayBids.map((bid) => (
+          <MobileCard key={bid.id} bid={bid} />
+        ))}
+      </div>
+
+      {/* Desktop Table (≥640px) */}
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeaders />
+          <TableBody>
+            {displayBids.map((bid) => {
+              const userHasBid = hasBidOnTender(bid.id);
+              return (
+                <TableRow key={bid.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                  <TableCell className="font-medium">
+                    <button className="text-navy-500 hover:text-navy-700 font-mono text-xs underline-offset-2 hover:underline transition-colors focus-brand">
+                      {bid.bid_number || "N/A"}
+                    </button>
+                  </TableCell>
+                  <TableCell>
                     <Tooltip>
                       <TooltipTrigger>
-                        <span className="text-sm text-gray-800">{truncateText(bid.ministry, 25)}</span>
+                        <span className="text-sm text-gray-800">{truncateText(bid.category, 40)}</span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{bid.ministry || "N/A"}</p>
+                        <p className="max-w-xs">{bid.category || "N/A"}</p>
                       </TooltipContent>
                     </Tooltip>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="text-sm text-gray-800">{truncateText(bid.department, 25)}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{bid.department || "N/A"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-gray-400" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="bg-blue-50 text-navy-600 text-xs font-semibold px-2 py-1 rounded-md w-fit">
+                      {bid.quantity || "N/A"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Building className="h-3 w-3 text-gray-400" />
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <span className="text-sm text-gray-800">{truncateText(bid.ministry, 25)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{bid.ministry || "N/A"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <Tooltip>
                       <TooltipTrigger>
-                        <span className="text-sm font-medium text-navy-600">{truncateText(bid.city, 15)}</span>
+                        <span className="text-sm text-gray-800">{truncateText(bid.department, 25)}</span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{bid.city || "N/A"}</p>
+                        <p>{bid.department || "N/A"}</p>
                       </TooltipContent>
                     </Tooltip>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-1">
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-xs text-gray-600">
-                        {bid.start_date 
-                          ? format(new Date(bid.start_date), "dd MMM")
-                          : "N/A"}
-                      </span>
+                      <MapPin className="h-3 w-3 text-gray-400" />
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <span className="text-sm font-medium text-navy-600">{truncateText(bid.city, 15)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{bid.city || "N/A"}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-xs text-gray-600">
-                        {bid.end_date 
-                          ? format(new Date(bid.end_date), "dd MMM")
-                          : "N/A"}
-                      </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600">
+                          {bid.start_date 
+                            ? format(new Date(bid.start_date), "dd MMM")
+                            : "N/A"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {bid.download_url ? (
-                    <Button size="sm" variant="ghost" asChild className="text-gray-600 hover:text-gray-800 hover:bg-gray-100">
-                      <a
-                        href={bid.download_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1"
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600">
+                          {bid.end_date 
+                            ? format(new Date(bid.end_date), "dd MMM")
+                            : "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {bid.download_url ? (
+                      <Button size="sm" variant="ghost" asChild className="text-gray-600 hover:text-gray-800 hover:bg-gray-100">
+                        <a
+                          href={bid.download_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span className="text-xs">PDF</span>
+                        </a>
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-gray-400">N/A</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isAuthenticated && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleBidClick(bid)}
+                        className={`text-xs px-3 py-1 rounded-md transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md focus-brand ${
+                          userHasBid 
+                            ? "bg-navy-500 hover:bg-navy-600 text-white" 
+                            : "bg-orange-500 hover:bg-orange-600 text-white"
+                        }`}
                       >
-                        <Download className="h-3 w-3" />
-                        <span className="text-xs">PDF</span>
-                      </a>
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-gray-400">N/A</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {isAuthenticated && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleBidClick(bid)}
-                      className={`text-xs px-3 py-1 rounded-md transition-all duration-200 hover:translate-y-[-1px] hover:shadow-md focus-brand ${
-                        userHasBid 
-                          ? "bg-navy-500 hover:bg-navy-600 text-white" 
-                          : "bg-orange-500 hover:bg-orange-600 text-white"
-                      }`}
-                    >
-                      {userHasBid ? "Edit Bid" : "Place Bid"}
-                    </Button>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {bid.bid_id && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      asChild
-                      className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                    >
-                      <Link to={`/bid/${bid.bid_id}`} className="flex gap-1 items-center">
-                        <FileText className="h-3 w-3" />
-                        <span className="text-xs">Docs</span>
-                      </Link>
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                        {userHasBid ? "Edit Bid" : "Place Bid"}
+                      </Button>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {bid.bid_id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        asChild
+                        className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                      >
+                        <Link to={`/bid/${bid.bid_id}`} className="flex gap-1 items-center">
+                          <FileText className="h-3 w-3" />
+                          <span className="text-xs">Docs</span>
+                        </Link>
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
 
       <PlaceBidModal 
         isOpen={bidModalOpen}

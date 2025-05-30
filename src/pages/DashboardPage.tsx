@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import DashboardHeader from "@/components/DashboardHeader";
@@ -11,12 +12,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { FileText, Settings, TrendingUp } from "lucide-react";
+import { FileText, Settings, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 import { useGemBids, useFilterOptions } from "@/hooks/useGemBids";
 import { useUserBids } from "@/hooks/useUserBids";
 import { useUserKeywords } from "@/hooks/useUserKeywords";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Filters {
   ministry: string;
@@ -38,6 +40,8 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState("tenders");
   const [keywordsDialogOpen, setKeywordsDialogOpen] = useState(false);
   const [userKeywords, setUserKeywords] = useState<string[]>([]);
+  const [keywordFilterExpanded, setKeywordFilterExpanded] = useState(false);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     ministry: "",
     department: "",
@@ -55,7 +59,7 @@ const DashboardPage = () => {
     ...filters,
     ministry: filters.ministry === "all" ? "" : filters.ministry,
     department: filters.department === "all" ? "" : filters.department,
-    city: filters.city === "all" ? "" : filters.city, // Added city processing
+    city: filters.city === "all" ? "" : filters.city,
   }), [filters]);
 
   // Initialize data fetching
@@ -64,7 +68,7 @@ const DashboardPage = () => {
   // Get user's bids
   const { bids: userBids, loading: userBidsLoading } = useUserBids();
   
-  // Get filter options - now includes cities
+  // Get filter options
   const { options: ministries } = useFilterOptions("ministry");
   const { options: departments } = useFilterOptions("department");
   const { options: cities } = useFilterOptions("city");
@@ -126,49 +130,78 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-brand-light-gray">
-      <DashboardHeader />
-      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+      <DashboardHeader onManageKeywords={() => setKeywordsDialogOpen(true)} />
+      <main className="max-w-7xl mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
         {/* Page Title Row */}
-        <div className="px-4 sm:px-0 mb-8 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold brand-navy font-inter">Tender Portal</h1>
-            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-200">
-              <TrendingUp className="h-4 w-4 brand-orange" />
-              <span className="text-sm font-semibold brand-orange font-inter">
-                {totalCount.toLocaleString()} Active Tenders
-              </span>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <h1 className="text-2xl sm:text-3xl font-bold brand-navy font-inter">Tender Portal</h1>
+              <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-orange-50 rounded-full border border-orange-200 w-fit">
+                <TrendingUp className="h-4 w-4 brand-orange" />
+                <span className="text-sm font-semibold brand-orange font-inter">
+                  {totalCount.toLocaleString()} Active Tenders
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-3">
-            {isAuthenticated && (
-              <Dialog open={keywordsDialogOpen} onOpenChange={setKeywordsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="border border-navy-500 text-navy-500 hover:bg-navy-50 focus-brand">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Manage Keywords
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md rounded-3xl shadow-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="font-semibold brand-navy">Manage Keywords</DialogTitle>
-                  </DialogHeader>
-                  <KeywordsManager onKeywordsUpdate={handleKeywordsUpdate} />
-                </DialogContent>
-              </Dialog>
-            )}
-            <Link to="/documents">
-              <Button variant="outline" className="border-gray-300 hover:bg-gray-50 focus-brand">
-                <FileText className="h-4 w-4 mr-2" />
-                My Documents
-              </Button>
-            </Link>
+            <div className="flex gap-3">
+              {isAuthenticated && (
+                <Dialog open={keywordsDialogOpen} onOpenChange={setKeywordsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" className="border border-navy-500 text-navy-500 hover:bg-navy-50 focus-brand hidden sm:flex">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Manage Keywords
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md rounded-3xl shadow-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="font-semibold brand-navy">Manage Keywords</DialogTitle>
+                    </DialogHeader>
+                    <KeywordsManager onKeywordsUpdate={handleKeywordsUpdate} />
+                  </DialogContent>
+                </Dialog>
+              )}
+              <Link to="/documents" className="hidden sm:block">
+                <Button variant="outline" className="border-gray-300 hover:bg-gray-50 focus-brand">
+                  <FileText className="h-4 w-4 mr-2" />
+                  My Documents
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
         
-        <div className="px-4 sm:px-0">
-          {/* Segmented Pill Tabs */}
+        <div className="space-y-4 sm:space-y-6">
+          {/* Mobile-First Tabs */}
           <Tabs defaultValue="tenders" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-8 bg-gray-100 p-1 rounded-full h-12">
+            {/* Mobile Toggle Bar (≤480px) */}
+            <div className="sm:hidden">
+              <div className="bg-gray-100 p-1 rounded-full h-12 flex">
+                <button
+                  onClick={() => setActiveTab("tenders")}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-full px-4 py-2 transition-all duration-200 min-h-[44px] ${
+                    activeTab === "tenders" ? "bg-white text-navy-500 shadow-sm" : "text-gray-600"
+                  }`}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="text-sm font-medium">All Tenders</span>
+                </button>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => setActiveTab("my-bids")}
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-full px-4 py-2 transition-all duration-200 min-h-[44px] ${
+                      activeTab === "my-bids" ? "bg-white text-navy-500 shadow-sm" : "text-gray-600"
+                    }`}
+                  >
+                    <TrendingUp className="h-4 w-4" />
+                    <span className="text-sm font-medium">My Bids</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop Tabs (≥480px) */}
+            <TabsList className="hidden sm:flex mb-8 bg-gray-100 p-1 rounded-full h-12">
               <TabsTrigger 
                 value="tenders" 
                 className="flex items-center gap-2 rounded-full px-6 py-2 data-[state=active]:bg-white data-[state=active]:text-navy-500 data-[state=active]:shadow-sm transition-all duration-200"
@@ -187,32 +220,119 @@ const DashboardPage = () => {
               )}
             </TabsList>
             
-            <TabsContent value="tenders" className="space-y-6">
-              {/* Keyword Filter Toggle */}
+            <TabsContent value="tenders" className="space-y-4 sm:space-y-6">
+              {/* Keyword Filter Banner */}
               {isAuthenticated && (
-                <Card className="table-shadow border-0 rounded-2xl bg-white">
-                  <CardContent className="pt-6">
-                    <KeywordFilterToggle
-                      enabled={filters.useKeywordFiltering}
-                      onChange={handleKeywordFilterChange}
-                      hasKeywords={hasKeywords}
-                      keywordCount={userKeywords.length}
-                    />
+                <Card className="table-shadow border-0 rounded-2xl bg-white overflow-hidden">
+                  <CardContent className="p-0">
+                    {/* Mobile Compact Banner (≤768px) */}
+                    <div className="md:hidden">
+                      <Collapsible open={keywordFilterExpanded} onOpenChange={setKeywordFilterExpanded}>
+                        <CollapsibleTrigger asChild>
+                          <button className="w-full h-12 px-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors border-b border-gray-100 min-h-[48px]">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-4 h-4 rounded-full ${filters.useKeywordFiltering && hasKeywords ? 'bg-orange-500' : 'bg-gray-300'}`} />
+                              <span className="text-sm font-medium brand-navy">
+                                {filters.useKeywordFiltering && hasKeywords ? 'Keyword filtering active' : 'Keyword filtering off'}
+                              </span>
+                            </div>
+                            {keywordFilterExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-gray-500" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-gray-500" />
+                            )}
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="transition-all duration-200">
+                          <div className="p-4 border-t border-gray-100">
+                            <KeywordFilterToggle
+                              enabled={filters.useKeywordFiltering}
+                              onChange={handleKeywordFilterChange}
+                              hasKeywords={hasKeywords}
+                              keywordCount={userKeywords.length}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+
+                    {/* Desktop Banner (≥768px) */}
+                    <div className="hidden md:block pt-6">
+                      <KeywordFilterToggle
+                        enabled={filters.useKeywordFiltering}
+                        onChange={handleKeywordFilterChange}
+                        hasKeywords={hasKeywords}
+                        keywordCount={userKeywords.length}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Filters */}
-              <AdvancedFilterBar
-                ministries={ministries}
-                departments={departments}
-                cities={cities}
-                onFilterChange={handleFilterChange}
-                currentFilters={filters}
-                totalResults={totalCount}
-              />
+              {/* Search & Advanced Filters */}
+              <Card className="table-shadow border-0 rounded-2xl bg-white overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Mobile Layout */}
+                  <div className="md:hidden">
+                    {/* Full-width Search */}
+                    <div className="p-4 border-b border-gray-100">
+                      <input
+                        type="text"
+                        placeholder="Search tenders..."
+                        value={filters.search}
+                        onChange={(e) => handleFilterChange({ ...filters, search: e.target.value })}
+                        className="w-full h-12 px-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-inner"
+                      />
+                    </div>
 
-              {/* Table */}
+                    {/* Advanced Filters Accordion */}
+                    <Collapsible open={advancedFiltersOpen} onOpenChange={setAdvancedFiltersOpen}>
+                      <CollapsibleTrigger asChild>
+                        <button className="w-full h-12 px-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors min-h-[48px]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium brand-navy">Advanced Filters</span>
+                            <div className="text-xs text-gray-500">
+                              ({totalCount.toLocaleString()} results)
+                            </div>
+                          </div>
+                          {advancedFiltersOpen ? (
+                            <ChevronUp className="h-4 w-4 text-gray-500 transition-transform duration-200" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-gray-500 transition-transform duration-200" />
+                          )}
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="transition-all duration-200">
+                        <div className="border-t border-gray-100">
+                          <AdvancedFilterBar
+                            ministries={ministries}
+                            departments={departments}
+                            cities={cities}
+                            onFilterChange={handleFilterChange}
+                            currentFilters={filters}
+                            totalResults={totalCount}
+                            isMobile={true}
+                          />
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+
+                  {/* Desktop Layout */}
+                  <div className="hidden md:block">
+                    <AdvancedFilterBar
+                      ministries={ministries}
+                      departments={departments}
+                      cities={cities}
+                      onFilterChange={handleFilterChange}
+                      currentFilters={filters}
+                      totalResults={totalCount}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Table/Cards */}
               <Card className="table-shadow border-0 rounded-2xl bg-white overflow-hidden">
                 <CardContent className="p-0">
                   <TenderTable bids={bids} loading={loading} />
@@ -245,6 +365,16 @@ const DashboardPage = () => {
           </Tabs>
         </div>
       </main>
+
+      {/* Keywords Dialog */}
+      <Dialog open={keywordsDialogOpen} onOpenChange={setKeywordsDialogOpen}>
+        <DialogContent className="max-w-md rounded-3xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-semibold brand-navy">Manage Keywords</DialogTitle>
+          </DialogHeader>
+          <KeywordsManager onKeywordsUpdate={handleKeywordsUpdate} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
