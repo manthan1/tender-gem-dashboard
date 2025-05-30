@@ -311,7 +311,6 @@ const DashboardPage = () => {
                             onFilterChange={handleFilterChange}
                             currentFilters={filters}
                             totalResults={totalCount}
-                            isMobile={true}
                           />
                         </div>
                       </CollapsibleContent>
