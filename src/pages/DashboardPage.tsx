@@ -1,6 +1,5 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import DashboardHeader from "@/components/DashboardHeader";
 import AdvancedFilterBar from "@/components/AdvancedFilterBar";
 import TenderTable from "@/components/TenderTable";
@@ -36,6 +35,7 @@ const DashboardPage = () => {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const { getUserKeywords } = useUserKeywords();
+  const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("tenders");
   const [keywordsDialogOpen, setKeywordsDialogOpen] = useState(false);
@@ -50,7 +50,7 @@ const DashboardPage = () => {
       from: null,
       to: null,
     },
-    search: "",
+    search: searchParams.get('search') || "",
     useKeywordFiltering: true,
   });
 
