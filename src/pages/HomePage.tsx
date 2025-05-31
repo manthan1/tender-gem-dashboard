@@ -78,9 +78,11 @@ const HomePage = () => {
                   </Button>
                 </Link>
               ) : (
-                <Button className="bg-red-500 hover:bg-red-600 text-white">
-                  Sign Out
-                </Button>
+                <Link to="/login">
+                  <Button className="bg-red-500 hover:bg-red-600 text-white">
+                    Sign In
+                  </Button>
+                </Link>
               )}
             </nav>
 
@@ -133,7 +135,9 @@ const HomePage = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {stats.map((stat, index) => (
-            <Card key={index} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <Card key={index} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              onClick={() => navigate('/dashboard')}
+            >
               <CardContent className="p-8 text-center">
                 <div className="mb-4 flex justify-center">
                   <div className={`p-4 rounded-2xl bg-gray-50 ${stat.color}`}>
