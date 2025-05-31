@@ -15,12 +15,33 @@ const HomePage = () => {
     const formData = new FormData(e.target as HTMLFormElement);
     const searchTerm = formData.get('search') as string;
     
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
     if (searchTerm.trim()) {
       // Navigate to dashboard with search term
       navigate(`/dashboard?search=${encodeURIComponent(searchTerm.trim())}`);
     } else {
       navigate('/dashboard');
     }
+  };
+
+  const handleCardClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    navigate('/dashboard');
+  };
+
+  const handleExploreClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    navigate('/dashboard');
   };
 
   const stats = [
@@ -65,9 +86,12 @@ const HomePage = () => {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/dashboard" className="text-gray-600 hover:text-brand-navy transition-colors">
+              <button 
+                onClick={handleCardClick}
+                className="text-gray-600 hover:text-brand-navy transition-colors"
+              >
                 Tenders
-              </Link>
+              </button>
               <span className="text-gray-600">About Us</span>
               <span className="text-gray-600">GeM Registration</span>
               <span className="text-gray-600">Company Insights</span>
@@ -88,11 +112,11 @@ const HomePage = () => {
 
             {/* Mobile menu button */}
             <div className="md:hidden">
-              <Link to="/dashboard">
+              <button onClick={handleCardClick}>
                 <Button size="sm" className="bg-brand-navy hover:bg-navy-700 text-white">
                   Dashboard
                 </Button>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -136,7 +160,7 @@ const HomePage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {stats.map((stat, index) => (
             <Card key={index} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-              onClick={() => navigate('/dashboard')}
+              onClick={handleCardClick}
             >
               <CardContent className="p-8 text-center">
                 <div className="mb-4 flex justify-center">
@@ -157,14 +181,13 @@ const HomePage = () => {
 
         {/* CTA Section */}
         <div className="text-center">
-          <Link to="/dashboard">
-            <Button 
-              size="lg"
-              className="bg-brand-orange hover:bg-orange-600 text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
-              Start Exploring Tenders
-            </Button>
-          </Link>
+          <Button 
+            size="lg"
+            onClick={handleExploreClick}
+            className="bg-brand-orange hover:bg-orange-600 text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          >
+            Start Exploring Tenders
+          </Button>
         </div>
       </main>
 
