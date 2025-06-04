@@ -72,15 +72,15 @@ const HomePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-yellow-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14">
             {/* Logo */}
             <div className="flex items-center">
-              <div className="bg-brand-navy text-white px-3 py-2 rounded-lg font-bold text-lg">
-                TENDER<span className="bg-brand-orange px-1 ml-1 rounded">AI</span>
+              <div className="bg-[#1E3A8A] text-white px-4 py-2 rounded-xl font-bold text-lg font-inter">
+                TENDER<span className="bg-[#3B82F6] px-1 ml-1 rounded">AI</span>
               </div>
             </div>
 
@@ -88,22 +88,22 @@ const HomePage = () => {
             <nav className="hidden md:flex items-center space-x-8">
               <button 
                 onClick={handleCardClick}
-                className="text-gray-600 hover:text-brand-navy transition-colors"
+                className="text-gray-600 hover:text-[#1E3A8A] transition-colors font-medium font-inter"
               >
                 Tenders
               </button>
-              <span className="text-gray-600">About Us</span>
-              <span className="text-gray-600">GeM Registration</span>
-              <span className="text-gray-600">Company Insights</span>
+              <span className="text-gray-600 font-medium font-inter">About Us</span>
+              <span className="text-gray-600 font-medium font-inter">GeM Registration</span>
+              <span className="text-gray-600 font-medium font-inter">Company Insights</span>
               {isAuthenticated ? (
                 <Link to="/dashboard">
-                  <Button className="bg-brand-navy hover:bg-navy-700 text-white">
+                  <Button className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl px-6 py-2 font-medium font-inter">
                     Dashboard
                   </Button>
                 </Link>
               ) : (
                 <Link to="/login">
-                  <Button className="bg-red-500 hover:bg-red-600 text-white">
+                  <Button className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl px-6 py-2 font-medium font-inter">
                     Sign In
                   </Button>
                 </Link>
@@ -113,7 +113,7 @@ const HomePage = () => {
             {/* Mobile menu button */}
             <div className="md:hidden">
               <button onClick={handleCardClick}>
-                <Button size="sm" className="bg-brand-navy hover:bg-navy-700 text-white">
+                <Button size="sm" className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl font-inter">
                   Dashboard
                 </Button>
               </button>
@@ -123,55 +123,67 @@ const HomePage = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-        <div className="text-center mb-12 sm:mb-16">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            WIN MORE GOVERNMENT
-            <br />
-            <span className="text-brand-orange">TENDERS</span>
-          </h1>
-          <p className="text-xl sm:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto">
-            Our AI helps you understand tenders better and make better bids
-          </p>
+      <main className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 py-16 sm:py-24">
+        <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+          <div className="text-left">
+            <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight font-inter">
+              WIN MORE GOVERNMENT
+              <br />
+              <span className="text-[#3B82F6]">TENDERS</span>
+            </h1>
+            <p className="text-lg text-[#6B7280] mb-10 max-w-lg leading-relaxed font-inter">
+              Our AI helps you understand tenders better and make better bids with intelligent insights and automated analysis.
+            </p>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-16">
-            <div className="relative flex items-center bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-              <div className="pl-6 pr-4">
-                <Search className="h-6 w-6 text-gray-400" />
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="mb-8">
+              <div className="relative flex items-center bg-white rounded-2xl shadow-inner border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-[#3B82F6] focus-within:ring-opacity-20 transition-all">
+                <div className="pl-6 pr-4">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  name="search"
+                  placeholder="e.g. CCTV Tenders in Gujarat"
+                  className="flex-1 py-4 px-2 text-base focus:outline-none border-0 font-inter placeholder-gray-400"
+                />
+                <Button 
+                  type="submit"
+                  className="m-2 px-6 py-3 bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl font-medium font-inter transition-colors"
+                >
+                  Search
+                </Button>
               </div>
-              <input
-                type="text"
-                name="search"
-                placeholder="Search for tenders..."
-                className="flex-1 py-4 px-2 text-lg focus:outline-none focus:ring-0 border-0"
-              />
-              <Button 
-                type="submit"
-                className="m-2 px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
-              >
-                Search
-              </Button>
+            </form>
+          </div>
+          
+          {/* AI Illustration Placeholder */}
+          <div className="hidden lg:flex justify-center items-center">
+            <div className="w-96 h-96 bg-gradient-to-br from-[#3B82F6] to-[#1E3A8A] rounded-3xl flex items-center justify-center shadow-2xl">
+              <div className="text-white text-6xl font-bold font-inter">AI</div>
             </div>
-          </form>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
           {stats.map((stat, index) => (
-            <Card key={index} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+            <Card 
+              key={index} 
+              className="bg-white border-0 cursor-pointer transition-all duration-200 hover:-translate-y-1"
+              style={{ boxShadow: '0 4px 8px rgba(0,0,0,0.04)' }}
               onClick={handleCardClick}
             >
-              <CardContent className="p-8 text-center">
+              <CardContent className="p-6 text-center">
                 <div className="mb-4 flex justify-center">
-                  <div className={`p-4 rounded-2xl bg-gray-50 ${stat.color}`}>
-                    <stat.icon className="h-8 w-8" />
+                  <div className="p-3 rounded-xl bg-gray-50">
+                    <stat.icon className="h-6 w-6 text-[#1E3A8A]" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">
+                <div className="text-xl font-bold text-gray-900 mb-1 font-inter">
                   {stat.number}
                 </div>
-                <div className="text-gray-600 font-medium">
+                <div className="text-sm text-gray-600 font-medium font-inter">
                   {stat.label}
                 </div>
               </CardContent>
@@ -184,7 +196,7 @@ const HomePage = () => {
           <Button 
             size="lg"
             onClick={handleExploreClick}
-            className="bg-brand-orange hover:bg-orange-600 text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+            className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-inter"
           >
             Start Exploring Tenders
           </Button>
@@ -193,7 +205,7 @@ const HomePage = () => {
 
       {/* Free Alerts Button (Fixed Position) */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-6 py-3 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
+        <Button className="bg-[#3B82F6] hover:bg-[#1E3A8A] text-white rounded-full px-6 py-3 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1 font-inter">
           <span className="mr-2">🔔</span>
           Free Alerts
         </Button>
