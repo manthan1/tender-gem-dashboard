@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, CheckSquare, Building2, Home, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import { useAuth } from "@/contexts/AuthContext";
 
 const HomePage = () => {
@@ -157,10 +159,52 @@ const HomePage = () => {
             </form>
           </div>
           
-          {/* AI Illustration Placeholder */}
+          {/* Image Carousel */}
           <div className="hidden lg:flex justify-center items-center">
-            <div className="w-96 h-96 bg-gradient-to-br from-[#3B82F6] to-[#1E3A8A] rounded-3xl flex items-center justify-center shadow-2xl">
-              <div className="text-white text-6xl font-bold font-inter">AI</div>
+            <div className="w-96 h-96 rounded-3xl overflow-hidden shadow-2xl">
+              <Carousel 
+                className="w-full h-full"
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                  }),
+                ]}
+              >
+                <CarouselContent className="h-full">
+                  <CarouselItem className="h-full">
+                    <img 
+                      src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=800&h=800&fit=crop&crop=center"
+                      alt="Professional workspace"
+                      className="w-full h-full object-cover"
+                    />
+                  </CarouselItem>
+                  <CarouselItem className="h-full">
+                    <img 
+                      src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&h=800&fit=crop&crop=center"
+                      alt="Modern laptop setup"
+                      className="w-full h-full object-cover"
+                    />
+                  </CarouselItem>
+                  <CarouselItem className="h-full">
+                    <img 
+                      src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=800&fit=crop&crop=center"
+                      alt="Business professional working"
+                      className="w-full h-full object-cover"
+                    />
+                  </CarouselItem>
+                  <CarouselItem className="h-full">
+                    <img 
+                      src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=800&fit=crop&crop=center"
+                      alt="MacBook Pro in use"
+                      className="w-full h-full object-cover"
+                    />
+                  </CarouselItem>
+                </CarouselContent>
+              </Carousel>
             </div>
           </div>
         </div>
