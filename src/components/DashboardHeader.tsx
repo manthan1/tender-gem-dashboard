@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import ThemeToggle from "@/components/ThemeToggle";
 import { User, Menu, X, Settings, FileText } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -122,6 +123,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onManageKeywords }) =
           </div>
           
           <div className="flex gap-3 items-center">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 focus-brand">
