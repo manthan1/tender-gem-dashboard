@@ -1,22 +1,31 @@
 
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, CheckSquare, Building2, Home, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CheckSquare, Building2, Home, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useAuth } from "@/contexts/AuthContext";
+import AnimatedCounter from "@/components/AnimatedCounter";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
+import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import TrustIndicators from "@/components/TrustIndicators";
+import StickyHeader from "@/components/StickyHeader";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const searchTerm = formData.get('search') as string;
-    
+  const handleSearch = (searchTerm: string) => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
@@ -49,80 +58,55 @@ const HomePage = () => {
   const stats = [
     {
       icon: CheckSquare,
-      number: "2,00,000+",
+      number: 200000,
+      suffix: "+",
       label: "All Tenders",
       color: "text-green-500"
     },
     {
       icon: Building2,
-      number: "1300+",
+      number: 1300,
+      suffix: "+",
       label: "Departments",
       color: "text-purple-500"
     },
     {
       icon: Home,
-      number: "65+",
+      number: 65,
+      suffix: "+",
       label: "Ministries",
       color: "text-blue-500"
     },
     {
       icon: Users,
-      number: "2000+",
+      number: 2000,
+      suffix: "+",
       label: "Organisations",
       color: "text-orange-500"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-yellow-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/5">
+      {/* Sticky Header */}
+      <StickyHeader />
+
+      {/* Breadcrumb */}
+      <div className="pt-16 pb-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14">
-            {/* Logo */}
-            <div className="flex items-center">
-              <div className="bg-[#1E3A8A] text-white px-4 py-2 rounded-xl font-bold text-lg font-inter">
-                TENDER<span className="bg-[#3B82F6] px-1 ml-1 rounded">AI</span>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <button 
-                onClick={handleCardClick}
-                className="text-gray-600 hover:text-[#1E3A8A] transition-colors font-medium font-inter"
-              >
-                Tenders
-              </button>
-              <span className="text-gray-600 font-medium font-inter">About Us</span>
-              <span className="text-gray-600 font-medium font-inter">GeM Registration</span>
-              <span className="text-gray-600 font-medium font-inter">Company Insights</span>
-              {isAuthenticated ? (
-                <Link to="/dashboard">
-                  <Button className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl px-6 py-2 font-medium font-inter">
-                    Dashboard
-                  </Button>
-                </Link>
-              ) : (
-                <Link to="/login">
-                  <Button className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl px-6 py-2 font-medium font-inter">
-                    Sign In
-                  </Button>
-                </Link>
-              )}
-            </nav>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button onClick={handleCardClick}>
-                <Button size="sm" className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl font-inter">
-                  Dashboard
-                </Button>
-              </button>
-            </div>
-          </div>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Tender Portal</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
-      </header>
+      </div>
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 py-16 sm:py-24">
@@ -137,26 +121,8 @@ const HomePage = () => {
               Our AI helps you understand tenders better and make better bids with intelligent insights and automated analysis.
             </p>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="mb-8">
-              <div className="relative flex items-center bg-white rounded-2xl shadow-inner border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-[#3B82F6] focus-within:ring-opacity-20 transition-all">
-                <div className="pl-6 pr-4">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  name="search"
-                  placeholder="e.g. CCTV Tenders in Gujarat"
-                  className="flex-1 py-4 px-2 text-base focus:outline-none border-0 font-inter placeholder-gray-400"
-                />
-                <Button 
-                  type="submit"
-                  className="m-2 px-6 py-3 bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl font-medium font-inter transition-colors"
-                >
-                  Search
-                </Button>
-              </div>
-            </form>
+            {/* Search Bar with Autocomplete */}
+            <SearchAutocomplete onSubmit={handleSearch} className="mb-8" />
           </div>
           
           {/* Image Carousel */}
@@ -220,14 +186,14 @@ const HomePage = () => {
             >
               <CardContent className="p-6 text-center">
                 <div className="mb-4 flex justify-center">
-                  <div className="p-3 rounded-xl bg-gray-50">
-                    <stat.icon className="h-6 w-6 text-[#1E3A8A]" />
+                  <div className="p-3 rounded-xl bg-muted">
+                    <stat.icon className="h-6 w-6 text-primary" />
                   </div>
                 </div>
-                <div className="text-xl font-bold text-gray-900 mb-1 font-inter">
-                  {stat.number}
+                <div className="text-xl font-bold text-foreground mb-1 font-inter">
+                  <AnimatedCounter end={stat.number} suffix={stat.suffix} />
                 </div>
-                <div className="text-sm text-gray-600 font-medium font-inter">
+                <div className="text-sm text-muted-foreground font-medium font-inter">
                   {stat.label}
                 </div>
               </CardContent>
@@ -240,16 +206,22 @@ const HomePage = () => {
           <Button 
             size="lg"
             onClick={handleExploreClick}
-            className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-inter"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-4 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-inter"
           >
             Start Exploring Tenders
           </Button>
         </div>
       </main>
 
+      {/* Testimonials Carousel */}
+      <TestimonialsCarousel />
+
+      {/* Trust Indicators */}
+      <TrustIndicators />
+
       {/* Free Alerts Button (Fixed Position) */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Button className="bg-[#3B82F6] hover:bg-[#1E3A8A] text-white rounded-full px-6 py-3 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1 font-inter">
+        <Button className="bg-accent hover:bg-primary text-accent-foreground rounded-full px-6 py-3 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1 font-inter">
           <span className="mr-2">🔔</span>
           Free Alerts
         </Button>
