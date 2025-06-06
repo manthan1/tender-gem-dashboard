@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const HomePage = () => {
@@ -98,7 +97,6 @@ const HomePage = () => {
               <span className="text-gray-600 font-medium font-inter">About Us</span>
               <span className="text-gray-600 font-medium font-inter">GeM Registration</span>
               <span className="text-gray-600 font-medium font-inter">Company Insights</span>
-              <ThemeToggle />
               {isAuthenticated ? (
                 <Link to="/dashboard">
                   <Button className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl px-6 py-2 font-medium font-inter">

@@ -7,8 +7,6 @@ import TablePagination from "@/components/TablePagination";
 import UserBidsTable from "@/components/UserBidsTable";
 import KeywordFilterToggle from "@/components/KeywordFilterToggle";
 import KeywordsManager from "@/components/KeywordsManager";
-import TenderTrendsChart from "@/components/TenderTrendsChart";
-import RecentActivityFeed from "@/components/RecentActivityFeed";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -173,14 +171,6 @@ const DashboardPage = () => {
           </div>
         </div>
         
-        {/* Analytics Dashboard */}
-        {isAuthenticated && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-            <TenderTrendsChart />
-            <RecentActivityFeed />
-          </div>
-        )}
-
         <div className="space-y-4 sm:space-y-6">
           {/* Mobile-First Tabs */}
           <Tabs defaultValue="tenders" value={activeTab} onValueChange={setActiveTab}>
