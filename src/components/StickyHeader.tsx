@@ -49,9 +49,11 @@ const StickyHeader: React.FC = () => {
         <div className="flex justify-between items-center h-14">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <div className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-bold text-lg font-inter">
-              TENDER<span className="bg-accent px-1 ml-1 rounded">AI</span>
-            </div>
+            <img 
+              src="/lovable-uploads/e772f406-db14-4640-97df-243f210d7d62.png" 
+              alt="TenderTimes"
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -91,9 +93,11 @@ const StickyHeader: React.FC = () => {
               <SheetContent side="right" className="w-80 bg-white">
                 <div className="flex flex-col h-full pt-6">
                   <div className="flex items-center gap-3 mb-8">
-                    <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg font-bold text-sm font-inter">
-                      TENDER<span className="bg-accent px-1 ml-1 rounded">AI</span>
-                    </div>
+                    <img 
+                      src="/lovable-uploads/e772f406-db14-4640-97df-243f210d7d62.png" 
+                      alt="TenderTimes"
+                      className="h-8 w-auto"
+                    />
                   </div>
                   
                   <nav className="space-y-4 flex-1">

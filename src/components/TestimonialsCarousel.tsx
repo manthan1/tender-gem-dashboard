@@ -13,7 +13,7 @@ const TestimonialsCarousel: React.FC = () => {
       company: "Kumar Construction Ltd",
       location: "Mumbai, Maharashtra",
       rating: 5,
-      text: "TenderAI has revolutionized how we find and bid for government contracts. The AI insights helped us increase our success rate by 60%.",
+      text: "TenderTimes has revolutionized how we find and bid for government contracts. The AI insights helped us increase our success rate by 60%.",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
     },
     {
@@ -62,7 +62,7 @@ const TestimonialsCarousel: React.FC = () => {
             What Our Clients Say
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-inter">
-            Join thousands of businesses that trust TenderAI to help them win government contracts
+            Join thousands of businesses that trust TenderTimes to help them win government contracts
           </p>
         </div>
 
